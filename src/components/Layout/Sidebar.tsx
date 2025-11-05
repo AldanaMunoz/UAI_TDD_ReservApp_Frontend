@@ -9,16 +9,15 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-
   { path: '/menu', label: 'Menú del día', roles: ['Empleado'] },
   { path: '/reserva', label: 'Reserva del día', roles: ['Empleado'] },
   { path: '/historial', label: 'Historial de reservas', roles: ['Empleado'] },
-  
 
-  { path: '/reservas-dia', label: 'Reservas del día', roles: ['Administrador'] },
+  { path: '/reservas-del-dia', label: 'Reservas del día', roles: ['Administrador'] },
   { path: '/gestion-comida', label: 'Gestión de comida', roles: ['Administrador'] },
-  { path: '/planificacion', label: 'Planificación por temporada', roles: ['Administrador'] },
-  { path: '/reportes', label: 'Reportes', roles: ['Administrador'] },
+  { path: '/planificacion-temporada', label: 'Planificación por temporada', roles: ['Administrador'] },
+  { path: '/gestion-usuarios', label: 'Gestión de usuarios', roles: ['Administrador'] },
+  { path: '/reportes', label: 'Reportes', roles: ['Administrador'] }
 ];
 
 function Sidebar() {
@@ -44,13 +43,13 @@ function Sidebar() {
 
       <nav className="sidebar-nav">
         {filteredMenuItems.map((item) => (
-          <button
+          <div
             key={item.path}
-            className={`sidebar-item ${location.pathname === item.path ? 'active' : ''}`}
+            className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
             onClick={() => navigate(item.path)}
           >
-            {item.label}
-          </button>
+            <span className="nav-label">{item.label}</span>
+          </div>
         ))}
       </nav>
 
@@ -59,7 +58,7 @@ function Sidebar() {
           <span className="user-icon">👤</span>
           <div className="user-details">
             <span className="user-name">
-              {user?.nombre} ({user?.roles?.[0]})
+              {user?.email} ({user?.roles?.[0]})
             </span>
           </div>
         </div>

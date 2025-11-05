@@ -53,13 +53,14 @@ function Login() {
         const response = await login({ email: formData.email, password: formData.password });
         // Redirigir según el rol del usuario
         if (response.user.roles?.includes('Administrador')) {
-          navigate('/reportes');
+          navigate('/');
         } else {
           navigate('/menu');
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error en la operación');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Error en la operación';
+      setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
     } finally {
       setLoading(false);
     }

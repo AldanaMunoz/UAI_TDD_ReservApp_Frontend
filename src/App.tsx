@@ -4,6 +4,10 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import EmployeeMenu from './pages/EmployeeMenu';
 import type { ReactNode } from 'react';
+import ReservasDelDia from './pages/ReservasDelDia';
+import GestionComida from './pages/GestionComida';
+import PlanificacionTemporada from './pages/PlanificacionTemporada';
+import GestionUsuarios from './pages/GestionUsuarios';
 
 interface PrivateRouteProps {
   children: ReactNode;
@@ -23,7 +27,7 @@ function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
 
   if (allowedRoles && !allowedRoles.some(role => user.roles?.includes(role))) {
     if (user.roles?.includes('Administrador')) {
-      return <Navigate to="/reportes" />;
+      return <Navigate to="/reservas-del-dia" />;
     }
     return <Navigate to="/menu" />;
   }
@@ -37,35 +41,69 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
-          
+
           {/* Rutas de Administrador */}
-          <Route 
-            path="/reportes" 
+          <Route
+            path="/reservas-del-dia"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <ReservasDelDia />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/gestion-comida"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <GestionComida />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/planificacion-temporada"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <PlanificacionTemporada />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/reportes"
             element={
               <PrivateRoute allowedRoles={['Administrador']}>
                 <AdminDashboard />
               </PrivateRoute>
-            } 
+            }
           />
-          
+
+          <Route
+            path="/gestion-usuarios"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <GestionUsuarios />
+              </PrivateRoute>
+            }
+          />
+
           {/* Rutas de Empleado */}
-          <Route 
-            path="/menu" 
+          <Route
+            path="/menu"
             element={
               <PrivateRoute allowedRoles={['Empleado']}>
                 <EmployeeMenu />
               </PrivateRoute>
-            } 
+            }
           />
-          
+
           {/* Redirección por default */}
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               <PrivateRoute>
                 <RoleBasedRedirect />
               </PrivateRoute>
-            } 
+            }
           />
         </Routes>
       </BrowserRouter>
@@ -75,11 +113,11 @@ function App() {
 
 function RoleBasedRedirect() {
   const { user } = useAuth();
-  
+
   if (user?.roles?.includes('Administrador')) {
-    return <Navigate to="/reportes" />;
+    return <Navigate to="/reservas-del-dia" />;
   }
-  
+
   return <Navigate to="/menu" />;
 }
 

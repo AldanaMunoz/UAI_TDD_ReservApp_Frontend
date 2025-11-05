@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from 'axios';
 
-const API_URL = 'http://localhost:3001/api';
+const API_URL = 'http://localhost:3000/api';
 
 export interface User {
   id: number;
@@ -52,26 +52,35 @@ api.interceptors.request.use(
 
 export const authService = {
   async register(userData: RegisterData): Promise<{ message: string; userId: number }> {
-    const response = await api.post('/auth/register', userData);
+    const response = await api.post('/users/register', userData);
     return response.data;
   },
 
   async login(credentials: LoginCredentials): Promise<LoginResponse> {
-    const response = await api.post<LoginResponse>('/auth/login', credentials);
-    if (response.data.token) {
-      localStorage.setItem('token', response.data.token);
+    const response = await api.post('/users/login', credentials);
+    // El backend devuelve firebase.idToken en lugar de token
+    if (response.data.firebase?.idToken) {
+      localStorage.setItem('token', response.data.firebase.idToken);
+      localStorage.setItem('refreshToken', response.data.firebase.refreshToken);
+      localStorage.setItem('firebaseUID', response.data.firebase.localId);
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    return response.data;
+    // Adaptar la respuesta al formato esperado por el frontend
+    return {
+      token: response.data.firebase.idToken,
+      user: response.data.user
+    };
   },
 
   async verifyToken(): Promise<{ valid: boolean; user: User }> {
-    const response = await api.get('/auth/verify');
+    const response = await api.get('/users/verify');
     return response.data;
   },
 
   logout(): void {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('firebaseUID');
     localStorage.removeItem('user');
   },
 
