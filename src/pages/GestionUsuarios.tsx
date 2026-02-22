@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
-import Sidebar from '../components/Layout/Sidebar';
+import TopNavbar from '../components/Layout/TopNavbar';
 import api from '../services/authService';
 import './GestionUsuarios.css';
 
@@ -26,7 +26,8 @@ interface FormData {
   apellido: string;
   turno: 'manana' | 'tarde' | 'noche';
   tipo: 'interno' | 'externo';
-  roles: number[];
+  roleId: number | null; // Solo UN rol por usuario
+  activo: number; // 1 = activo, 0 = inactivo
 }
 
 function GestionUsuarios() {
@@ -35,6 +36,8 @@ function GestionUsuarios() {
   const [filteredUsuarios, setFilteredUsuarios] = useState<Usuario[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingUsuarios, setLoadingUsuarios] = useState(true);
   const [loadingRoles, setLoadingRoles] = useState(true);
@@ -48,7 +51,8 @@ function GestionUsuarios() {
     apellido: '',
     turno: 'manana',
     tipo: 'interno',
-    roles: []
+    roleId: null,
+    activo: 1
   });
 
   useEffect(() => {
@@ -101,16 +105,16 @@ function GestionUsuarios() {
     });
   };
 
-  const handleRoleToggle = (roleId: number) => {
+  const handleRoleChange = (roleId: number) => {
     setFormData(prev => ({
       ...prev,
-      roles: prev.roles.includes(roleId)
-        ? prev.roles.filter(id => id !== roleId)
-        : [...prev.roles, roleId]
+      roleId: roleId
     }));
   };
 
   const handleOpenModal = () => {
+    setIsEditMode(false);
+    setEditingUserId(null);
     setFormData({
       email: '',
       password: '',
@@ -118,8 +122,50 @@ function GestionUsuarios() {
       apellido: '',
       turno: 'manana',
       tipo: 'interno',
-      roles: []
+      roleId: null,
+      activo: 1
     });
+    setError('');
+    setSuccess('');
+    setShowModal(true);
+  };
+
+  const handleOpenEditModal = async (usuario: Usuario) => {
+    setIsEditMode(true);
+    setEditingUserId(usuario.id);
+
+    // Obtener el rol del usuario desde el backend
+    try {
+      const response = await api.get(`/user-bundle/users/${usuario.id}/roles`);
+      const userRole = response.data[0]?.id || null; // Solo el primer rol
+
+      setFormData({
+        email: usuario.email,
+        password: '', // No mostramos la contraseña actual
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        turno: usuario.turno as 'manana' | 'tarde' | 'noche',
+        tipo: usuario.tipo as 'interno' | 'externo',
+        roleId: userRole,
+        activo: usuario.activo
+      });
+    } catch (err) {
+      // Si falla, intentamos inferir el rol del string
+      const rolesString = usuario.roles || '';
+      const role = roles.find(r => rolesString.includes(r.nombre));
+
+      setFormData({
+        email: usuario.email,
+        password: '',
+        nombre: usuario.nombre,
+        apellido: usuario.apellido,
+        turno: usuario.turno as 'manana' | 'tarde' | 'noche',
+        tipo: usuario.tipo as 'interno' | 'externo',
+        roleId: role?.id || null,
+        activo: usuario.activo
+      });
+    }
+
     setError('');
     setSuccess('');
     setShowModal(true);
@@ -127,6 +173,8 @@ function GestionUsuarios() {
 
   const handleCloseModal = () => {
     setShowModal(false);
+    setIsEditMode(false);
+    setEditingUserId(null);
     setFormData({
       email: '',
       password: '',
@@ -134,7 +182,8 @@ function GestionUsuarios() {
       apellido: '',
       turno: 'manana',
       tipo: 'interno',
-      roles: []
+      roleId: null,
+      activo: 1
     });
     setError('');
   };
@@ -145,46 +194,71 @@ function GestionUsuarios() {
     setSuccess('');
     setLoading(true);
 
-    if (formData.roles.length === 0) {
-      setError('Debe seleccionar al menos un rol');
+    if (!formData.roleId) {
+      setError('Debe seleccionar un rol');
       setLoading(false);
       return;
     }
 
     try {
-      await api.post('/user-bundle/create', {
-        user: {
-          email: formData.email,
-          password: formData.password,
-          activo: 1
-        },
-        person: {
-          nombre: formData.nombre,
-          apellido: formData.apellido
-        },
-        employee: {
-          turno: formData.turno,
-          tipo: formData.tipo
-        },
-        roles: formData.roles
-      });
+      if (isEditMode && editingUserId) {
+        // Modo edición: actualizar usuario
+        await handleUpdateUser(editingUserId);
+      } else {
+        // Modo creación: crear nuevo usuario
+        await api.post('/user-bundle/create', {
+          user: {
+            email: formData.email,
+            password: formData.password,
+            activo: 1
+          },
+          person: {
+            nombre: formData.nombre,
+            apellido: formData.apellido
+          },
+          employee: {
+            turno: formData.turno,
+            tipo: formData.tipo
+          },
+          roles: [formData.roleId] // El backend espera un array
+        });
 
-      setSuccess('Usuario creado exitosamente');
+        setSuccess('Usuario creado exitosamente');
+      }
+
       setTimeout(() => {
         handleCloseModal();
         loadUsuarios();
       }, 1500);
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message || 'Error al crear usuario';
+      const errorMessage = err.response?.data?.message || err.message || (isEditMode ? 'Error al actualizar usuario' : 'Error al crear usuario');
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleUpdateUser = async (userId: number) => {
+    // Por ahora, la edición completa requiere endpoints adicionales en el backend
+    // Simplemente mostramos un mensaje de error
+    throw new Error('La edición de usuarios aún no está implementada. Por favor, crea un nuevo usuario con los datos correctos o usa el botón de Activar/Desactivar para cambiar el estado.');
+  };
+
+  const handleToggleActive = async (userId: number, currentStatus: number) => {
+    try {
+      const newStatus = currentStatus === 1 ? 0 : 1;
+      await api.patch(`/users/${userId}/activo`, {
+        activo: newStatus
+      });
+      loadUsuarios();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al cambiar estado del usuario');
+    }
+  };
+
   return (
-    <div className="dashboard-container">
-      <Sidebar />
+    <>
+      <TopNavbar />
       <div className="main-content">
         <div className="page-header">
           <div>
@@ -221,12 +295,13 @@ function GestionUsuarios() {
                   <th>Tipo</th>
                   <th>Roles</th>
                   <th>Estado</th>
+                  <th>Acciones</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredUsuarios.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="no-data">
+                    <td colSpan={9} className="no-data">
                       {searchTerm ? 'No se encontraron usuarios' : 'No hay usuarios registrados'}
                     </td>
                   </tr>
@@ -247,6 +322,38 @@ function GestionUsuarios() {
                           {usuario.activo === 1 ? 'Activo' : 'Inactivo'}
                         </span>
                       </td>
+                      <td>
+                        <div className="action-buttons">
+                          <button
+                            className="btn-edit"
+                            onClick={() => handleOpenEditModal(usuario)}
+                            title="Editar usuario"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                          </button>
+                          <button
+                            className={`btn-toggle ${usuario.activo === 1 ? 'btn-deactivate' : 'btn-activate'}`}
+                            onClick={() => handleToggleActive(usuario.id, usuario.activo)}
+                            title={usuario.activo === 1 ? 'Desactivar' : 'Activar'}
+                          >
+                            {usuario.activo === 1 ? (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="15" y1="9" x2="9" y2="15"></line>
+                                <line x1="9" y1="9" x2="15" y2="15"></line>
+                              </svg>
+                            ) : (
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -260,7 +367,7 @@ function GestionUsuarios() {
           <div className="modal-overlay" onClick={handleCloseModal}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>Crear Nuevo Usuario</h2>
+                <h2>{isEditMode ? 'Editar Usuario' : 'Crear Nuevo Usuario'}</h2>
                 <button className="modal-close" onClick={handleCloseModal}>
                   &times;
                 </button>
@@ -286,14 +393,14 @@ function GestionUsuarios() {
                         />
                       </div>
                       <div className="form-group">
-                        <label htmlFor="password">Contraseña *</label>
+                        <label htmlFor="password">Contraseña {isEditMode ? '(dejar en blanco para no cambiar)' : '*'}</label>
                         <input
                           type="password"
                           id="password"
                           name="password"
                           value={formData.password}
                           onChange={handleChange}
-                          required
+                          required={!isEditMode}
                           minLength={6}
                         />
                       </div>
@@ -362,18 +469,19 @@ function GestionUsuarios() {
                   </div>
 
                   <div className="form-section">
-                    <h3>Roles *</h3>
+                    <h3>Rol *</h3>
                     {loadingRoles ? (
                       <p>Cargando roles...</p>
                     ) : (
                       <div className="roles-grid">
                         {roles.map((role) => (
-                          <div key={role.id} className="role-checkbox">
+                          <div key={role.id} className="role-option">
                             <label>
                               <input
-                                type="checkbox"
-                                checked={formData.roles.includes(role.id)}
-                                onChange={() => handleRoleToggle(role.id)}
+                                type="radio"
+                                name="role"
+                                checked={formData.roleId === role.id}
+                                onChange={() => handleRoleChange(role.id)}
                               />
                               <span>{role.nombre}</span>
                             </label>
@@ -388,7 +496,7 @@ function GestionUsuarios() {
                       Cancelar
                     </button>
                     <button type="submit" disabled={loading} className="btn-primary">
-                      {loading ? 'Creando...' : 'Crear Usuario'}
+                      {loading ? (isEditMode ? 'Actualizando...' : 'Creando...') : (isEditMode ? 'Actualizar Usuario' : 'Crear Usuario')}
                     </button>
                   </div>
                 </form>
@@ -397,7 +505,7 @@ function GestionUsuarios() {
           </div>
         )}
       </div>
-    </div>
+    </>
   );
 }
 

@@ -1,0 +1,93 @@
+/* ============================================
+   ESTILOS GLOBALES DE DASHBOARD (TOP NAVBAR)
+   ============================================ */
+
+.page-container {
+  min-height: 100vh;
+  background: #E6F8B2;
+  padding-top: 70px; /* Altura del navbar */
+}
+
+.page-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* ============================================
+   PAGE HEADER
+   ============================================ */
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+}
+
+.subtitle {
+  color: #79745C;
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* ============================================
+   CONTENT AREA
+   ============================================ */
+.content-area {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  min-height: 400px;
+}
+
+.placeholder-text {
+  color: #666;
+  font-size: 1rem;
+  text-align: center;
+  margin: 0;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* Tablets */
+@media (max-width: 1024px) {
+  .page-content {
+    padding: 1.5rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Móviles */
+@media (max-width: 768px) {
+  .page-content {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .content-area {
+    padding: 1.5rem;
+  }
+}
+
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .page-content {
+    padding: 0.75rem;
+  }
+
+  .content-area {
+    padding: 1rem;
+  }
+}

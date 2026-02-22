@@ -40,17 +40,43 @@ function Login() {
     try {
       if (isRegister) {
         await register(formData);
+        // Guardar temporalmente los datos de registro para usarlos en el login
+        localStorage.setItem('tempUserData', JSON.stringify({
+          email: formData.email,
+          nombre: formData.nombre,
+          apellido: formData.apellido,
+          turno: formData.turno,
+          tipo: formData.tipo
+        }));
         alert('Registro exitoso. Ahora puedes iniciar sesión');
         setIsRegister(false);
-        setFormData({ 
-          ...formData, 
-          nombre: '', 
-          apellido: '', 
-          turno: 'manana', 
-          tipo: 'interno' 
+        setFormData({
+          ...formData,
+          nombre: '',
+          apellido: '',
+          turno: 'manana',
+          tipo: 'interno'
         });
       } else {
         const response = await login({ email: formData.email, password: formData.password });
+
+        // Si hay datos temporales guardados, agregarlos al usuario
+        const tempData = localStorage.getItem('tempUserData');
+        if (tempData) {
+          const parsedData = JSON.parse(tempData);
+          if (parsedData.email === formData.email) {
+            const updatedUser = {
+              ...response.user,
+              nombre: parsedData.nombre,
+              apellido: parsedData.apellido,
+              turno: parsedData.turno,
+              tipo: parsedData.tipo
+            };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+            localStorage.removeItem('tempUserData');
+          }
+        }
+
         // Redirigir según el rol del usuario
         if (response.user.roles?.includes('Administrador')) {
           navigate('/');

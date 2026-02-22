@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Layout/Sidebar';
+import TopNavbar from '../components/Layout/TopNavbar';
 import './AdminDashboard.css';
 
 interface ReportCard {
@@ -49,8 +49,8 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="dashboard-container">
-      <Sidebar />
+    <>
+      <TopNavbar />
       <div className="main-content">
         <div className="page-header">
           <h1>Reportes</h1>
@@ -58,8 +58,8 @@ function AdminDashboard() {
 
         <div className="reports-grid">
           {reportCards.map((card) => (
-            <div 
-              key={card.id} 
+            <div
+              key={card.id}
               className="report-card"
               onClick={() => handleCardClick(card.path)}
             >
@@ -71,7 +71,7 @@ function AdminDashboard() {
           ))}
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

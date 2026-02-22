@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Sidebar from '../components/Layout/Sidebar';
+import TopNavbar from '../components/Layout/TopNavbar';
 import './ReservasDelDia.css';
 
 interface Reserva {
@@ -37,18 +37,18 @@ function ReservasDelDia() {
 
   if (loading) {
     return (
-      <div className="dashboard-container">
-        <Sidebar />
+      <>
+        <TopNavbar />
         <div className="main-content">
           <p>Cargando...</p>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
-    <div className="dashboard-container">
-      <Sidebar />
+    <>
+      <TopNavbar />
       <div className="main-content">
         <div className="page-header">
           <h1>Reservas del día</h1>
@@ -124,7 +124,7 @@ function ReservasDelDia() {
           </table>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

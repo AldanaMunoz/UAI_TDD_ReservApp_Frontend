@@ -1,24 +1,361 @@
+/* ============================================
+   EMPLOYEE MENU - PÁGINA COMPLETA
+   ============================================ */
+
 .page-header {
-  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+  font-size: 2rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: #79745C;
+  font-size: 1rem;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+/* Selector de fecha */
+.date-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.date-input {
+  padding: 0.75rem 1rem;
+  border: 2px solid #709176;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-input:hover {
+  border-color: #5a7760;
+  box-shadow: 0 2px 8px rgba(112, 145, 118, 0.2);
+}
+
+.date-input:focus {
+  outline: none;
+  border-color: #709176;
+  box-shadow: 0 0 0 3px rgba(112, 145, 118, 0.1);
+}
+
+/* Loading y Error */
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.error-message {
+  background: #ffebee;
+  color: #c62828;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #c62828;
+}
+
+.info-message {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid #1565c0;
+}
+
+/* ============================================
+   CARDS DE MENÚ Y RESERVA
+   ============================================ */
+
+.menu-card,
+.reservation-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.menu-card h2,
+.reservation-card h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+/* ============================================
+   SECCIONES DEL MENÚ
+   ============================================ */
+
+.menu-section {
   margin-bottom: 2rem;
 }
 
+.menu-section h3 {
+  color: #709176;
+  font-size: 1.2rem;
+  margin: 0 0 1rem 0;
+  font-weight: 600;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #709176;
+}
+
+.checkbox-label input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.checkbox-label span {
+  user-select: none;
+}
+
+.dish-card {
+  background: #f5f5f5;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #e0e0e0;
+}
+
+.dish-name {
+  font-size: 1.05rem;
+  color: #333;
+  font-weight: 500;
+}
+
+/* ============================================
+   SELECCIÓN DE PLATOS
+   ============================================ */
+
+.dish-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dish-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dish-option:hover {
+  border-color: #709176;
+  background: rgba(112, 145, 118, 0.05);
+}
+
+.dish-option input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #709176;
+}
+
+.dish-option input[type="radio"]:checked + span {
+  font-weight: 600;
+  color: #709176;
+}
+
+.dish-option span {
+  font-size: 1.05rem;
+  color: #333;
+}
+
+/* ============================================
+   DETALLES DE RESERVA
+   ============================================ */
+
+.reservation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.dish-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+  border-left: 4px solid #709176;
+}
+
+.dish-label {
+  font-weight: 600;
+  color: #709176;
+  min-width: 100px;
+}
+
+.dish-item .dish-name {
+  color: #333;
+  flex: 1;
+}
+
+/* ============================================
+   BOTONES
+   ============================================ */
+
+.reserve-btn,
+.cancel-btn {
+  flex: 1;
+  min-width: 150px;
+}
+
 .reserve-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
-  padding: 0.75rem 1.5rem;
+  width: 100%;
+  padding: 1rem 2rem;
   background: #709176;
   color: white;
   border: none;
   border-radius: 8px;
-  cursor: pointer;
+  font-size: 1.1rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(112, 145, 118, 0.3);
+}
+
+.reserve-btn:hover:not(:disabled) {
+  background: #5a7760;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(112, 145, 118, 0.4);
+}
+
+.reserve-btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(112, 145, 118, 0.3);
+}
+
+.reserve-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cancel-btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: #d32f2f;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.reserve-btn:hover {
-  background: #5a7760;
+.cancel-btn:hover:not(:disabled) {
+  background: #b71c1c;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(112, 145, 118, 0.3);
+  box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+.cancel-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .page-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .date-selector {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  .menu-card,
+  .reservation-card {
+    padding: 1.5rem;
+  }
+
+  .dish-option {
+    padding: 0.875rem 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .menu-card h2,
+  .reservation-card h2 {
+    font-size: 1.25rem;
+  }
+
+  .menu-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .dish-option span {
+    font-size: 0.95rem;
+  }
+
+  .reserve-btn,
+  .cancel-btn {
+    font-size: 1rem;
+    padding: 0.875rem 1.5rem;
+  }
 }

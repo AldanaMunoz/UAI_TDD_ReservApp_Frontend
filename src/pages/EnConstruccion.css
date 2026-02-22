@@ -1,8 +1,21 @@
+body {
+  background: #E6F8B2;
+  min-height: 100vh;
+}
+
+.main-content {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  margin-top: 70px; /* Espacio para el navbar superior */
+  min-height: calc(100vh - 70px);
+}
+
 .en-construccion-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 4rem);
+  min-height: calc(100vh - 200px);
   padding: 2rem;
 }
 

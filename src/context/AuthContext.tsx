@@ -22,12 +22,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem('token');
+      console.log('Token encontrado:', token ? 'Sí' : 'No');
+
       if (token) {
         try {
-          await authService.verifyToken();
+          console.log('Cargando usuario desde localStorage...');
           const currentUser = authService.getCurrentUser();
+          console.log('Usuario actual:', currentUser);
           setUser(currentUser);
         } catch (error) {
+          console.error('Error al cargar usuario:', error);
           authService.logout();
         }
       }

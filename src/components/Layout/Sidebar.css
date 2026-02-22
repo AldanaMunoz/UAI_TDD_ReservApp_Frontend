@@ -1,3 +1,81 @@
+/* ============================================
+   BOTÓN HAMBURGUESA
+   ============================================ */
+.hamburger-btn {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1100;
+  width: 50px;
+  height: 50px;
+  background: #709176;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.hamburger-btn:hover {
+  background: #5a7760;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hamburger-btn span {
+  width: 24px;
+  height: 3px;
+  background: white;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* Animación del botón cuando está colapsado */
+.hamburger-btn.collapsed span:nth-child(1) {
+  transform: translateY(9px) rotate(45deg);
+}
+
+.hamburger-btn.collapsed span:nth-child(2) {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
+.hamburger-btn.collapsed span:nth-child(3) {
+  transform: translateY(-9px) rotate(-45deg);
+}
+
+/* ============================================
+   OVERLAY
+   ============================================ */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
 .sidebar {
   width: 250px;
   height: 100vh;
@@ -8,10 +86,17 @@
   position: fixed;
   left: 0;
   top: 0;
+  z-index: 1000;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed {
+  transform: translateX(-100%);
 }
 
 .sidebar-header {
   padding: 1.5rem;
+  padding-top: 5rem;
   border-bottom: 1px solid #e0e0e0;
   background: linear-gradient(135deg, #709176 0%, #79745C 100%);
 }
@@ -90,13 +175,28 @@
 
 .user-details {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
 }
 
 .user-name {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  display: block;
+  font-size: 0.75rem;
   color: #666;
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .logout-btn {
@@ -114,4 +214,32 @@
 .logout-btn:hover {
   background: #5a7760;
   transform: translateY(-1px);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* Tablets */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 280px;
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+}
+
+/* Móviles */
+@media (max-width: 480px) {
+  .sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .hamburger-btn {
+    width: 45px;
+    height: 45px;
+  }
 }

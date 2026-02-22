@@ -1,10 +1,10 @@
-import Sidebar from '../components/Layout/Sidebar';
+import TopNavbar from '../components/Layout/TopNavbar';
 import './EnConstruccion.css';
 
 function PlanificacionTemporada() {
   return (
-    <div className="dashboard-container">
-      <Sidebar />
+    <>
+      <TopNavbar />
       <div className="main-content">
         <div className="en-construccion-container">
           <div className="en-construccion-card">
@@ -24,7 +24,7 @@ function PlanificacionTemporada() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

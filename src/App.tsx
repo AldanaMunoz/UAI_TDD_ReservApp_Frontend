@@ -5,9 +5,11 @@ import AdminDashboard from './pages/AdminDashboard';
 import EmployeeMenu from './pages/EmployeeMenu';
 import type { ReactNode } from 'react';
 import ReservasDelDia from './pages/ReservasDelDia';
-import GestionComida from './pages/GestionComida';
+import GestionComidas from './pages/GestionComidas';
 import PlanificacionTemporada from './pages/PlanificacionTemporada';
 import GestionUsuarios from './pages/GestionUsuarios';
+import HistorialReservas from './pages/HistorialReservas';
+import PlanificacionEmpleado from './pages/PlanificacionEmpleado';
 
 interface PrivateRouteProps {
   children: ReactNode;
@@ -55,7 +57,7 @@ function App() {
             path="/gestion-comida"
             element={
               <PrivateRoute allowedRoles={['Administrador']}>
-                <GestionComida />
+                <GestionComidas />
               </PrivateRoute>
             }
           />
@@ -92,6 +94,22 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['Empleado']}>
                 <EmployeeMenu />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/historial"
+            element={
+              <PrivateRoute allowedRoles={['Empleado']}>
+                <HistorialReservas />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/planificacion"
+            element={
+              <PrivateRoute allowedRoles={['Empleado']}>
+                <PlanificacionEmpleado />
               </PrivateRoute>
             }
           />

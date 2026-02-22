@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
-import Sidebar from '../components/Layout/Sidebar';
+import TopNavbar from '../components/Layout/TopNavbar';
 import api from '../services/authService';
 import './RegistroUsuarios.css';
 
@@ -118,8 +118,8 @@ function RegistroUsuarios() {
   };
 
   return (
-    <div className="dashboard-container">
-      <Sidebar />
+    <>
+      <TopNavbar />
       <div className="main-content">
         <div className="page-header">
           <h1>Registro de Usuarios</h1>
@@ -251,7 +251,7 @@ function RegistroUsuarios() {
           </form>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
