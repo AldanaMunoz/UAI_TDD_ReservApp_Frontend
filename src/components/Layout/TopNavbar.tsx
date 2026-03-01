@@ -18,6 +18,7 @@ const menuItems: MenuItem[] = [
   { path: '/gestion-comida', label: 'Gestión de comida', roles: ['Administrador'] },
   { path: '/planificacion-temporada', label: 'Planificación por temporada', roles: ['Administrador'] },
   { path: '/gestion-usuarios', label: 'Gestión de usuarios', roles: ['Administrador'] },
+  { path: '/liquidacion-mensual', label: 'Liquidación Mensual', roles: ['Administrador'] },
   { path: '/reportes', label: 'Reportes', roles: ['Administrador'] }
 ];
 

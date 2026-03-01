@@ -1,0 +1,176 @@
+.modal-content-details {
+  background: white;
+  border-radius: 12px;
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.liquidation-summary {
+  background: #f8f8f8;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.liquidation-summary h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #709176;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  font-size: 1rem;
+}
+
+.summary-row span {
+  color: #666;
+}
+
+.summary-row strong {
+  color: #333;
+}
+
+.total-amount {
+  color: #709176 !important;
+  font-size: 1.2rem;
+}
+
+.btn-export {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: #709176;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  width: 100%;
+}
+
+.btn-export:hover {
+  background: #5a7a60;
+}
+
+.reservations-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.reservations-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.reservations-table thead {
+  background: #709176;
+  color: white;
+}
+
+.reservations-table th,
+.reservations-table td {
+  padding: 1rem;
+  text-align: left;
+}
+
+.reservations-table th {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reservations-table tbody tr {
+  border-bottom: 1px solid #e0e0e0;
+  transition: background 0.2s;
+}
+
+.reservations-table tbody tr:hover {
+  background: #f8f8f8;
+}
+
+.reservations-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.price-applied {
+  font-weight: 600;
+  color: #709176;
+  font-size: 1.05rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.badge-interno {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-externo {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-confirmada {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-asistio {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-noshow {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.status-cancelada {
+  background: #ffebee;
+  color: #c62828;
+}
+
+@media (max-width: 768px) {
+  .modal-content-details {
+    max-height: 95vh;
+    max-width: 100%;
+    border-radius: 0;
+  }
+
+  .reservations-table {
+    font-size: 0.85rem;
+  }
+
+  .reservations-table th,
+  .reservations-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .summary-row {
+    font-size: 0.9rem;
+  }
+}

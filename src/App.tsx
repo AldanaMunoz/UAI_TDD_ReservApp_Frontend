@@ -10,6 +10,7 @@ import PlanificacionTemporada from './pages/PlanificacionTemporada';
 import GestionUsuarios from './pages/GestionUsuarios';
 import HistorialReservas from './pages/HistorialReservas';
 import PlanificacionEmpleado from './pages/PlanificacionEmpleado';
+import LiquidacionMensual from './pages/LiquidacionMensual';
 
 interface PrivateRouteProps {
   children: ReactNode;
@@ -84,6 +85,15 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['Administrador']}>
                 <GestionUsuarios />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/liquidacion-mensual"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <LiquidacionMensual />
               </PrivateRoute>
             }
           />

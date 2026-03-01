@@ -1,0 +1,325 @@
+body {
+  background: #E6F8B2;
+  min-height: 100vh;
+}
+
+.page-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-top: 70px;
+  min-height: calc(100vh - 70px);
+}
+
+.page-content {
+  width: 100%;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  color: #333;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 1rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: #709176;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #5a7a60;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: #999;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #777;
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.alert {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.alert-error {
+  background: #fee;
+  color: #c33;
+  border: 1px solid #fcc;
+}
+
+.alert-success {
+  background: #efe;
+  color: #3c3;
+  border: 1px solid #cfc;
+}
+
+.generate-form-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.generate-form-card h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #709176;
+  font-size: 1.25rem;
+}
+
+.generate-form {
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #709176;
+}
+
+.btn-generate {
+  background: #709176;
+  color: white;
+  width: 100%;
+  padding: 0.875rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-generate:hover:not(:disabled) {
+  background: #5a7a60;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(112, 145, 118, 0.3);
+}
+
+.btn-generate:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.form-note {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: #f8f8f8;
+  border-left: 3px solid #709176;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.liquidations-section {
+  margin-top: 2rem;
+}
+
+.liquidations-section h2 {
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 3rem;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.no-data {
+  background: white;
+  padding: 3rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.no-data p {
+  color: #999;
+  margin: 0.5rem 0;
+}
+
+.no-data .hint {
+  font-size: 0.9rem;
+  color: #bbb;
+  font-style: italic;
+}
+
+.liquidations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.liquidation-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s ease;
+}
+
+.liquidation-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.liquidation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #E6F8B2;
+}
+
+.liquidation-header h3 {
+  margin: 0;
+  color: #709176;
+  font-size: 1.25rem;
+}
+
+.btn-delete-small {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.25rem;
+  transition: transform 0.1s;
+}
+
+.btn-delete-small:hover {
+  transform: scale(1.2);
+}
+
+.liquidation-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #709176;
+  margin-bottom: 0.5rem;
+}
+
+.liquidation-id {
+  color: #999;
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+.liquidation-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.btn-view-details {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  background: #709176;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-view-details:hover {
+  background: #5a7a60;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .liquidations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .generate-form-card {
+    padding: 1.5rem;
+  }
+}
