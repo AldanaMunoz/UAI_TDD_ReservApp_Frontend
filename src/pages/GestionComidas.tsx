@@ -32,6 +32,10 @@ function GestionComidas() {
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingFoodId, setEditingFoodId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -58,6 +62,7 @@ function GestionComidas() {
       food.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredFoods(filtered);
+    setCurrentPage(1); // Reset a la primera página cuando cambian los filtros
   }, [searchTerm, foods]);
 
   const loadFoods = async () => {
@@ -211,6 +216,59 @@ function GestionComidas() {
     return type?.name || '-';
   };
 
+  // Calcular paginación
+  const totalPages = Math.ceil(filteredFoods.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedFoods = filteredFoods.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  };
+
+  // Generar números de página a mostrar (con elipsis)
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 7;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
+  };
+
   return (
     <>
       <TopNavbar />
@@ -258,7 +316,7 @@ function GestionComidas() {
                     </td>
                   </tr>
                 ) : (
-                  filteredFoods.map((food) => (
+                  paginatedFoods.map((food) => (
                     <tr key={food.id}>
                       <td>{food.id}</td>
                       <td>{food.name}</td>
@@ -325,6 +383,65 @@ function GestionComidas() {
           </div>
         )}
 
+        {!loadingFoods && filteredFoods.length > 0 && (
+          <div className="pagination-container">
+            <div className="pagination-info">
+              <span>Mostrando {startIndex + 1} - {Math.min(endIndex, filteredFoods.length)} de {filteredFoods.length} registros</span>
+              <div className="items-per-page">
+                <label htmlFor="items-per-page">Registros por página:</label>
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="page-size-select"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="pagination-btn"
+                >
+                  ← Anterior
+                </button>
+
+                <div className="pagination-pages">
+                  {getPageNumbers().map((page, index) => (
+                    page === '...' ? (
+                      <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page as number)}
+                        className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
         {showModal && (
           <div className="modal-overlay" onClick={handleCloseModal}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -376,18 +493,6 @@ function GestionComidas() {
                           ))
                         )}
                       </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="imageUrl">URL de Imagen (opcional)</label>
-                      <input
-                        type="text"
-                        id="imageUrl"
-                        name="imageUrl"
-                        value={formData.imageUrl}
-                        onChange={handleChange}
-                        placeholder="https://ejemplo.com/imagen.jpg"
-                      />
                     </div>
 
                     <div className="form-checkboxes">

@@ -25,13 +25,14 @@ const reportCards: ReportCard[] = [
     icon: '📈',
     path: '/reportes/preferencias'
   },
-  {
-    id: 'consumo-tipo',
-    title: 'Consumo mensual por tipo de empleado',
-    description: 'Analiza el consumo diferenciado entre empleados internos y externos para planificación presupuestaria.',
-    icon: '📉',
-    path: '/reportes/consumo-tipo'
-  },
+  // Ocultado temporalmente - Consumo mensual por tipo de empleado
+  // {
+  //   id: 'consumo-tipo',
+  //   title: 'Consumo mensual por tipo de empleado',
+  //   description: 'Analiza el consumo diferenciado entre empleados internos y externos para planificación presupuestaria.',
+  //   icon: '📉',
+  //   path: '/reportes/consumo-tipo'
+  // },
   {
     id: 'consumo-usuario',
     title: 'Consumo por usuario',

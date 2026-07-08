@@ -92,14 +92,17 @@
 .day-section {
   border: 2px solid #E6F8B2;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
   background: white;
+  position: relative;
+  z-index: 1;
 }
 
 .day-header {
   background: #709176;
   color: white;
   padding: 0.75rem 1rem;
+  border-radius: 10px 10px 0 0;
 }
 
 .day-header h3 {
@@ -145,6 +148,97 @@
 .meal-select:focus {
   outline: none;
   border-color: #709176;
+}
+
+/* Searchable Select Styles */
+.searchable-select {
+  position: relative;
+  width: 100%;
+  z-index: 100;
+}
+
+.searchable-select-input {
+  position: relative;
+  width: 100%;
+}
+
+.meal-search-input {
+  width: 100%;
+  padding: 0.75rem;
+  padding-right: 2.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  background: white;
+}
+
+.meal-search-input:focus {
+  outline: none;
+  border-color: #709176;
+  box-shadow: 0 0 0 3px rgba(112, 145, 118, 0.1);
+}
+
+.clear-btn {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  color: #999;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.clear-btn:hover {
+  color: #666;
+}
+
+.searchable-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #709176;
+  border-top: 1px solid #709176;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  margin-top: 4px;
+}
+
+.searchable-select-option {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.searchable-select-option:last-child {
+  border-bottom: none;
+}
+
+.searchable-select-option:hover {
+  background-color: #f8f8f8;
+}
+
+.searchable-select-option.selected {
+  background-color: #E6F8B2;
+  font-weight: 500;
+}
+
+.no-results {
+  padding: 1rem;
+  text-align: center;
+  color: #999;
+  font-style: italic;
 }
 
 .modal-actions {

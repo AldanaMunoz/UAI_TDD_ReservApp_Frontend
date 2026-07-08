@@ -13,6 +13,10 @@ function LiquidationDetailsModal({ isOpen, onClose, liquidationId }: Liquidation
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   useEffect(() => {
     if (isOpen && liquidationId) {
       loadDetails();
@@ -56,10 +60,73 @@ function LiquidationDetailsModal({ isOpen, onClose, liquidationId }: Liquidation
     return months[month - 1] || month.toString();
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     if (!liquidationId) return;
-    const url = liquidationService.getExportCSVUrl(liquidationId);
-    window.open(url, '_blank');
+
+    try {
+      setLoading(true);
+      await liquidationService.exportToExcel(liquidationId);
+    } catch (err: any) {
+      console.error('Error al exportar Excel:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Error al exportar Excel';
+      setError(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calcular paginación
+  const reservations = details?.reservations || [];
+  const totalPages = Math.ceil(reservations.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedReservations = reservations.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  };
+
+  // Generar números de página a mostrar (con elipsis)
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 7;
+
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   };
 
   if (!isOpen) return null;
@@ -90,7 +157,7 @@ function LiquidationDetailsModal({ isOpen, onClose, liquidationId }: Liquidation
                   <strong className="total-amount">${Number(details.liquidation.totalAmount || 0).toFixed(2)}</strong>
                 </div>
                 <button className="btn btn-export" onClick={handleExport}>
-                  Exportar a CSV
+                  Exportar a Excel
                 </button>
               </div>
 
@@ -111,7 +178,7 @@ function LiquidationDetailsModal({ isOpen, onClose, liquidationId }: Liquidation
                       </tr>
                     </thead>
                     <tbody>
-                      {details.reservations.map((res: ReservationDetail) => (
+                      {paginatedReservations.map((res: ReservationDetail) => (
                         <tr key={res.reservationId}>
                           <td>{res.reservationId}</td>
                           <td>{formatDate(res.reservedDate)}</td>
@@ -133,6 +200,65 @@ function LiquidationDetailsModal({ isOpen, onClose, liquidationId }: Liquidation
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {details && details.reservations.length > 0 && (
+                <div className="pagination-container">
+                  <div className="pagination-info">
+                    <span>Mostrando {startIndex + 1} - {Math.min(endIndex, reservations.length)} de {reservations.length} registros</span>
+                    <div className="items-per-page">
+                      <label htmlFor="items-per-page">Registros por página:</label>
+                      <select
+                        id="items-per-page"
+                        value={itemsPerPage}
+                        onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                        className="page-size-select"
+                      >
+                        <option value={5}>5</option>
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {totalPages > 1 && (
+                    <div className="pagination-controls">
+                      <button
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="pagination-btn"
+                      >
+                        ← Anterior
+                      </button>
+
+                      <div className="pagination-pages">
+                        {getPageNumbers().map((page, index) => (
+                          page === '...' ? (
+                            <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>
+                          ) : (
+                            <button
+                              key={page}
+                              onClick={() => goToPage(page as number)}
+                              className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                            >
+                              {page}
+                            </button>
+                          )
+                        ))}
+                      </div>
+
+                      <button
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className="pagination-btn"
+                      >
+                        Siguiente →
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </>

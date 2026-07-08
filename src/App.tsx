@@ -11,6 +11,10 @@ import GestionUsuarios from './pages/GestionUsuarios';
 import HistorialReservas from './pages/HistorialReservas';
 import PlanificacionEmpleado from './pages/PlanificacionEmpleado';
 import LiquidacionMensual from './pages/LiquidacionMensual';
+import AsistenciaDetail from './pages/ReportDetails/AsistenciaDetail';
+import PreferenciasDetail from './pages/ReportDetails/PreferenciasDetail';
+import ConsumoTipoDetail from './pages/ReportDetails/ConsumoTipoDetail';
+import ConsumoUsuarioDetail from './pages/ReportDetails/ConsumoUsuarioDetail';
 
 interface PrivateRouteProps {
   children: ReactNode;
@@ -94,6 +98,40 @@ function App() {
             element={
               <PrivateRoute allowedRoles={['Administrador']}>
                 <LiquidacionMensual />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Rutas de Reportes - Detalle */}
+          <Route
+            path="/reportes/asistencia"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <AsistenciaDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reportes/preferencias"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <PreferenciasDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reportes/consumo-tipo"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <ConsumoTipoDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/reportes/consumo-usuario"
+            element={
+              <PrivateRoute allowedRoles={['Administrador']}>
+                <ConsumoUsuarioDetail />
               </PrivateRoute>
             }
           />

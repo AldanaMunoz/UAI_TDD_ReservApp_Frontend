@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import weeklyPlanningService, { type WeeklyPlanning } from '../services/weeklyPlanningService';
 import foodService, { type Food } from '../services/foodService';
 import './WeeklyPlanningModal.css';
@@ -32,6 +32,92 @@ interface DayMealAssignments {
   principalId: number | null;
   alternativoId: number | null;
   vegetarianoId: number | null;
+}
+
+interface SearchableSelectProps {
+  value: number | null;
+  onChange: (value: string) => void;
+  options: Food[];
+  placeholder?: string;
+  required?: boolean;
+}
+
+function SearchableSelect({ value, onChange, options, placeholder, required }: SearchableSelectProps) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const selectedMeal = options.find(m => m.id === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredOptions = options.filter(meal =>
+    meal.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleSelect = (mealId: number) => {
+    onChange(mealId.toString());
+    setSearchTerm('');
+    setIsOpen(false);
+  };
+
+  const handleClear = () => {
+    onChange('');
+    setSearchTerm('');
+  };
+
+  return (
+    <div className="searchable-select" ref={wrapperRef}>
+      <div className="searchable-select-input">
+        <input
+          type="text"
+          value={isOpen ? searchTerm : (selectedMeal?.name || '')}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          onFocus={() => setIsOpen(true)}
+          placeholder={placeholder}
+          className="meal-search-input"
+        />
+        {selectedMeal && !isOpen && (
+          <button
+            type="button"
+            className="clear-btn"
+            onClick={handleClear}
+            title="Limpiar selección"
+          >
+            ×
+          </button>
+        )}
+      </div>
+      {isOpen && (
+        <div className="searchable-select-dropdown">
+          {filteredOptions.length === 0 ? (
+            <div className="no-results">No se encontraron comidas</div>
+          ) : (
+            filteredOptions.map(meal => (
+              meal.id != null && (
+                <div
+                  key={meal.id}
+                  className={`searchable-select-option ${value != null && meal.id === value ? 'selected' : ''}`}
+                  onClick={() => handleSelect(meal.id!)}
+                >
+                  {meal.name}
+                </div>
+              )
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: WeeklyPlanningModalProps) {
@@ -194,72 +280,48 @@ function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: Weekly
                   {/* Entrada - Optional */}
                   <div className="meal-type-row">
                     <label>Entrada (Opcional)</label>
-                    <select
-                      value={selectedMeals[day.value]?.entradaId || ''}
-                      onChange={(e) => handleMealChange(day.value, 'entradaId', e.target.value)}
-                      className="meal-select"
-                    >
-                      <option value="">-- Seleccionar comida --</option>
-                      {getMealsByType(MEAL_TYPES.ENTRADA).map(meal => (
-                        <option key={meal.id} value={meal.id}>
-                          {meal.name}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchableSelect
+                      value={selectedMeals[day.value]?.entradaId || null}
+                      onChange={(value) => handleMealChange(day.value, 'entradaId', value)}
+                      options={getMealsByType(MEAL_TYPES.ENTRADA)}
+                      placeholder="Buscar entrada..."
+                    />
                   </div>
 
                   {/* Plato Principal - Required */}
                   <div className="meal-type-row">
                     <label>Plato Principal <span className="required">*</span></label>
-                    <select
-                      value={selectedMeals[day.value]?.principalId || ''}
-                      onChange={(e) => handleMealChange(day.value, 'principalId', e.target.value)}
-                      className="meal-select"
+                    <SearchableSelect
+                      value={selectedMeals[day.value]?.principalId || null}
+                      onChange={(value) => handleMealChange(day.value, 'principalId', value)}
+                      options={getMealsByType(MEAL_TYPES.PRINCIPAL)}
+                      placeholder="Buscar plato principal..."
                       required
-                    >
-                      <option value="">-- Seleccionar comida --</option>
-                      {getMealsByType(MEAL_TYPES.PRINCIPAL).map(meal => (
-                        <option key={meal.id} value={meal.id}>
-                          {meal.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   {/* Plato Alternativo - Required */}
                   <div className="meal-type-row">
                     <label>Plato Alternativo <span className="required">*</span></label>
-                    <select
-                      value={selectedMeals[day.value]?.alternativoId || ''}
-                      onChange={(e) => handleMealChange(day.value, 'alternativoId', e.target.value)}
-                      className="meal-select"
+                    <SearchableSelect
+                      value={selectedMeals[day.value]?.alternativoId || null}
+                      onChange={(value) => handleMealChange(day.value, 'alternativoId', value)}
+                      options={getMealsByType(MEAL_TYPES.ALTERNATIVO)}
+                      placeholder="Buscar plato alternativo..."
                       required
-                    >
-                      <option value="">-- Seleccionar comida --</option>
-                      {getMealsByType(MEAL_TYPES.ALTERNATIVO).map(meal => (
-                        <option key={meal.id} value={meal.id}>
-                          {meal.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   {/* Plato Vegetariano - Required */}
                   <div className="meal-type-row">
                     <label>Plato Vegetariano <span className="required">*</span></label>
-                    <select
-                      value={selectedMeals[day.value]?.vegetarianoId || ''}
-                      onChange={(e) => handleMealChange(day.value, 'vegetarianoId', e.target.value)}
-                      className="meal-select"
+                    <SearchableSelect
+                      value={selectedMeals[day.value]?.vegetarianoId || null}
+                      onChange={(value) => handleMealChange(day.value, 'vegetarianoId', value)}
+                      options={getMealsByType(MEAL_TYPES.VEGETARIANO)}
+                      placeholder="Buscar plato vegetariano..."
                       required
-                    >
-                      <option value="">-- Seleccionar comida --</option>
-                      {getMealsByType(MEAL_TYPES.VEGETARIANO).map(meal => (
-                        <option key={meal.id} value={meal.id}>
-                          {meal.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
                 </div>
               </div>

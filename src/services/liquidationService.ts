@@ -87,9 +87,38 @@ const liquidationService = {
     return response.data;
   },
 
-  getExportCSVUrl(id: number): string {
-    const token = localStorage.getItem('token');
-    return `${API_URL}/liquidations/${id}/export/csv?token=${token}`;
+  async exportToExcel(id: number): Promise<void> {
+    const response = await api.get(`/liquidations/${id}/export/excel`, {
+      responseType: 'blob'
+    });
+
+    // Crear un blob con el contenido Excel
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+
+    // Crear un enlace temporal para descargar
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Extraer el nombre del archivo del header Content-Disposition si existe
+    const contentDisposition = response.headers['content-disposition'];
+    let filename = 'liquidacion.xlsx';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+
+    // Limpiar
+    link.remove();
+    window.URL.revokeObjectURL(url);
   }
 };
 

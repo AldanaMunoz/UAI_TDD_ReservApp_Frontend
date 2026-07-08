@@ -30,6 +30,10 @@ function ReservasDelDia() {
   const [searchName, setSearchName] = useState('');
   const [filterTipo, setFilterTipo] = useState('');
 
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
   useEffect(() => {
     if (turnoSeleccionado && turnoLocked) {
       loadReservas();
@@ -56,6 +60,7 @@ function ReservasDelDia() {
     }
 
     setFilteredReservas(filtered);
+    setCurrentPage(1); // Reset a la primera página cuando cambian los filtros
   }, [reservas, searchName, filterTipo, turnoSeleccionado]);
 
   const loadReservas = async () => {
@@ -131,6 +136,64 @@ function ReservasDelDia() {
   const isFechaFutura = () => {
     const hoy = new Date().toISOString().split('T')[0];
     return fechaSeleccionada > hoy;
+  };
+
+  // Calcular paginación
+  const totalPages = Math.ceil(filteredReservas.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedReservas = filteredReservas.slice(startIndex, endIndex);
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handleItemsPerPageChange = (value: number) => {
+    setItemsPerPage(value);
+    setCurrentPage(1);
+  };
+
+  // Generar números de página a mostrar (con elipsis)
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 7; // Máximo de botones de página visibles
+
+    if (totalPages <= maxVisible) {
+      // Si hay pocas páginas, mostrar todas
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Siempre mostrar primera página
+      pages.push(1);
+
+      if (currentPage <= 3) {
+        // Cerca del inicio
+        for (let i = 2; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Cerca del final
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // En el medio
+        pages.push('...');
+        pages.push(currentPage - 1);
+        pages.push(currentPage);
+        pages.push(currentPage + 1);
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+
+    return pages;
   };
 
   const handleFinalizarTurno = async () => {
@@ -337,7 +400,7 @@ function ReservasDelDia() {
                   </td>
                 </tr>
               ) : (
-                filteredReservas.map((reserva) => (
+                paginatedReservas.map((reserva) => (
                   <tr key={reserva.id}>
                     <td className="nombre-cell">{reserva.nombre_completo}</td>
                     <td>{reserva.tipo_empleado === 'interno' ? 'Interno' : 'Externo'}</td>
@@ -378,6 +441,65 @@ function ReservasDelDia() {
             </tbody>
           </table>
         </div>
+
+        {filteredReservas.length > 0 && (
+          <div className="pagination-container">
+            <div className="pagination-info">
+              <span>Mostrando {startIndex + 1} - {Math.min(endIndex, filteredReservas.length)} de {filteredReservas.length} registros</span>
+              <div className="items-per-page">
+                <label htmlFor="items-per-page">Registros por página:</label>
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="page-size-select"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                </select>
+              </div>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="pagination-controls">
+                <button
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="pagination-btn"
+                >
+                  ← Anterior
+                </button>
+
+                <div className="pagination-pages">
+                  {getPageNumbers().map((page, index) => (
+                    page === '...' ? (
+                      <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>
+                    ) : (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page as number)}
+                        className={`pagination-page ${currentPage === page ? 'active' : ''}`}
+                      >
+                        {page}
+                      </button>
+                    )
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
             </>
           )}
         </>

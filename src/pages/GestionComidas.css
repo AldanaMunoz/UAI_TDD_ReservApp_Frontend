@@ -82,33 +82,42 @@ body {
 }
 
 .comidas-table thead {
-  background: #f8f8f8;
-  border-bottom: 2px solid #e0e0e0;
+  background: #5a7760;
+  color: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .comidas-table th {
   padding: 1rem;
   text-align: left;
-  font-weight: 600;
-  color: #333;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  white-space: nowrap;
+  border-bottom: 2px solid #4a5f50;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .comidas-table tbody tr {
   border-bottom: 1px solid #f0f0f0;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .comidas-table tbody tr:hover {
-  background: #fafafa;
+  background: #f8f9fa;
+}
+
+.comidas-table tbody tr:last-child {
+  border-bottom: none;
 }
 
 .comidas-table td {
-  padding: 1rem;
-  color: #555;
-  font-size: 0.95rem;
+  padding: 0.875rem 1rem;
+  color: #333;
+  font-size: 0.9rem;
+  vertical-align: middle;
 }
 
 .no-data {
@@ -153,8 +162,7 @@ body {
 }
 
 .btn-edit,
-.btn-toggle,
-.btn-delete {
+.btn-toggle {
   background: none;
   border: none;
   font-size: 1.25rem;
@@ -182,13 +190,27 @@ body {
   transform: scale(1.1);
 }
 
-.btn-delete:hover {
-  background: rgba(211, 47, 47, 0.1);
-  transform: scale(1.1);
+.btn-delete {
+  background: #d32f2f;
+  border: none;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-delete svg {
-  color: #d32f2f;
+  color: white;
+  stroke: white;
+}
+
+.btn-delete:hover {
+  background: #b71c1c;
+  transform: scale(1.1);
 }
 
 /* Modal Styles */
@@ -394,6 +416,147 @@ body {
   background: #e0e0e0;
 }
 
+/* Paginación */
+.pagination-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.pagination-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.pagination-info > span {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.items-per-page {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.items-per-page label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.page-size-select {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-size-select:hover {
+  border-color: #709176;
+}
+
+.page-size-select:focus {
+  outline: none;
+  border-color: #709176;
+  box-shadow: 0 0 0 3px rgba(112, 145, 118, 0.1);
+}
+
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  padding: 0.625rem 1.25rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #709176;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: #709176;
+  color: white;
+  border-color: #709176;
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  color: #999;
+}
+
+.pagination-pages {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pagination-page {
+  min-width: 36px;
+  height: 36px;
+  padding: 0.5rem;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-page:hover {
+  background: #f8f9fa;
+  border-color: #709176;
+  color: #709176;
+}
+
+.pagination-page.active {
+  background: #709176;
+  color: white;
+  border-color: #709176;
+}
+
+.pagination-ellipsis {
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-weight: 600;
+  user-select: none;
+}
+
 @media (max-width: 768px) {
   .page-header {
     flex-direction: column;
@@ -416,5 +579,28 @@ body {
   .comidas-table th,
   .comidas-table td {
     padding: 0.75rem 0.5rem;
+  }
+
+  .pagination-info {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .items-per-page {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pagination-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pagination-btn {
+    width: 100%;
+  }
+
+  .pagination-pages {
+    width: 100%;
   }
 }
