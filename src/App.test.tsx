@@ -1,9 +1,20 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import App from './App';
 
-test('renders learn react link', () => {
+jest.mock('./services/api', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    patch: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn(),
+  },
+  resolveApiAssetUrl: (url?: string) => url,
+}));
+
+test('muestra el login cuando no existe una sesion', () => {
+  localStorage.clear();
   render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: /iniciar sesi/i })).toBeInTheDocument();
 });

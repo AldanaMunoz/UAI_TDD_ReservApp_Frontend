@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import TopNavbar from '../components/Layout/TopNavbar';
 import menuService, { type MenuDelDia } from '../services/menuService';
 import './PlanificacionEmpleado.css';
@@ -9,11 +9,7 @@ function PlanificacionEmpleado() {
   const [error, setError] = useState('');
   const [currentWeekOffset, setCurrentWeekOffset] = useState(0); // 0 = semana actual, 1 = próxima, -1 = anterior
 
-  useEffect(() => {
-    loadWeekMenus();
-  }, [currentWeekOffset]);
-
-  const loadWeekMenus = async () => {
+  const loadWeekMenus = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -70,7 +66,11 @@ function PlanificacionEmpleado() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentWeekOffset]);
+
+  useEffect(() => {
+    void loadWeekMenus();
+  }, [loadWeekMenus]);
 
   const formatDateDisplay = (dateStr: string): string => {
     const date = new Date(dateStr + 'T00:00:00');

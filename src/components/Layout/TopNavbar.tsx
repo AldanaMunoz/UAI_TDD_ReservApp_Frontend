@@ -10,9 +10,9 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { path: '/menu', label: 'Menú del día', roles: ['Empleado'] },
-  { path: '/planificacion', label: 'Planificación', roles: ['Empleado'] },
-  { path: '/historial', label: 'Historial', roles: ['Empleado'] },
+  { path: '/menu', label: 'Menú del día', roles: ['Empleado', 'Cocinero'] },
+  { path: '/planificacion', label: 'Planificación', roles: ['Empleado', 'Cocinero'] },
+  { path: '/historial', label: 'Historial', roles: ['Empleado', 'Cocinero'] },
 
   { path: '/reservas-del-dia', label: 'Reservas del día', roles: ['Administrador'] },
   { path: '/gestion-comida', label: 'Gestión de comida', roles: ['Administrador'] },
@@ -47,9 +47,9 @@ function TopNavbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   const handleNavigation = (path: string) => {

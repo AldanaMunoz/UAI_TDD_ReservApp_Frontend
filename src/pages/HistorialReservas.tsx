@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import TopNavbar from '../components/Layout/TopNavbar';
 import menuService from '../services/menuService';
@@ -30,15 +30,7 @@ function HistorialReservas() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    loadReservas();
-  }, []);
-
-  useEffect(() => {
-    aplicarFiltros();
-  }, [reservas, fechaInicio, fechaFin, estadoFiltro]);
-
-  const loadReservas = async () => {
+  const loadReservas = useCallback(async () => {
     if (!user?.id) return;
 
     setLoading(true);
@@ -59,9 +51,9 @@ function HistorialReservas() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const aplicarFiltros = () => {
+  const aplicarFiltros = useCallback(() => {
     let filtered = [...reservas];
 
     // Filtrar por rango de fechas
@@ -86,7 +78,15 @@ function HistorialReservas() {
 
     setFilteredReservas(filtered);
     setCurrentPage(1); // Reset a la primera página cuando cambian los filtros
-  };
+  }, [reservas, fechaInicio, fechaFin, estadoFiltro]);
+
+  useEffect(() => {
+    void loadReservas();
+  }, [loadReservas]);
+
+  useEffect(() => {
+    aplicarFiltros();
+  }, [aplicarFiltros]);
 
   const limpiarFiltros = () => {
     setFechaInicio('');

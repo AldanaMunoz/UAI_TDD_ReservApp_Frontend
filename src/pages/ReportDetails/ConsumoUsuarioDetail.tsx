@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import TopNavbar from '../../components/Layout/TopNavbar';
 import { metricsService, type ConsumoPorUsuario } from '../../services/metricsService';
 import './ConsumoUsuarioDetail.css';
@@ -34,11 +34,7 @@ function ConsumoUsuarioDetail() {
     { valor: 12, nombre: 'Diciembre' }
   ];
 
-  useEffect(() => {
-    loadData();
-  }, [mesSeleccionado, anioSeleccionado, fechaSeleccionada, modoFiltro]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -55,7 +51,11 @@ function ConsumoUsuarioDetail() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [mesSeleccionado, anioSeleccionado, fechaSeleccionada, modoFiltro]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const handleMesChange = (mes: number) => {
     setMesSeleccionado(mes);

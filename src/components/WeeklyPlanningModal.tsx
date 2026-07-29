@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import weeklyPlanningService, { type WeeklyPlanning } from '../services/weeklyPlanningService';
 import foodService, { type Food } from '../services/foodService';
 import './WeeklyPlanningModal.css';
@@ -126,16 +126,7 @@ function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: Weekly
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (isOpen) {
-      loadMeals();
-      if (weeklyPlanning) {
-        loadAssignedMeals();
-      }
-    }
-  }, [isOpen, weeklyPlanning]);
-
-  const loadMeals = async () => {
+  const loadMeals = useCallback(async () => {
     try {
       const data = await foodService.getAll();
       setMeals(data.filter(m => m.isActive !== false));
@@ -143,9 +134,9 @@ function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: Weekly
       console.error('Error loading meals:', err);
       setError('Error al cargar comidas');
     }
-  };
+  }, []);
 
-  const loadAssignedMeals = async () => {
+  const loadAssignedMeals = useCallback(async () => {
     if (!weeklyPlanning) return;
 
     try {
@@ -179,7 +170,16 @@ function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: Weekly
       });
       setSelectedMeals(initialSelected);
     }
-  };
+  }, [weeklyPlanning]);
+
+  useEffect(() => {
+    if (isOpen) {
+      void loadMeals();
+      if (weeklyPlanning) {
+        void loadAssignedMeals();
+      }
+    }
+  }, [isOpen, weeklyPlanning, loadMeals, loadAssignedMeals]);
 
   const handleMealChange = (dayOfWeek: number, mealType: keyof DayMealAssignments, mealId: string) => {
     const mealIdNum = mealId ? parseInt(mealId) : null;

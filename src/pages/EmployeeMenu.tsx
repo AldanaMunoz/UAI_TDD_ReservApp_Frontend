@@ -1,9 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import TopNavbar from '../components/Layout/TopNavbar';
 import menuService, { type MenuDelDia, type Reserva, type MenuItem } from '../services/menuService';
+import { resolveApiAssetUrl } from '../services/api';
 import '../styles/dashboard.css';
 import './EmployeeMenu.css';
+
+function DishImage({ imageUrl, name }: { imageUrl?: string | null; name: string }) {
+  const [failed, setFailed] = useState(false);
+  const src = resolveApiAssetUrl(imageUrl);
+
+  if (!src || failed) {
+    return <div className="dish-image-placeholder">Sin imagen</div>;
+  }
+
+  return <img className="dish-image" src={src} alt={name} loading="lazy" onError={() => setFailed(true)} />;
+}
+
+function DishCard({ name, imageUrl }: { name: string; imageUrl?: string | null }) {
+  return (
+    <div className="dish-card">
+      <DishImage imageUrl={imageUrl} name={name} />
+      <span className="dish-name">{name}</span>
+    </div>
+  );
+}
 
 function EmployeeMenu() {
   console.log('=== EmployeeMenu renderizando ===');
@@ -63,22 +84,7 @@ function EmployeeMenu() {
     return true;
   };
 
-  useEffect(() => {
-    // Limpiar selecciones cuando cambia la fecha
-    setSelectedPrincipal(null);
-    setWantsEntrada(false);
-    setSelectedBebida(null);
-    setSelectedPostre(null);
-    setIsEditing(false);
-
-    loadMenuAndReservation();
-  }, [selectedDate]);
-
-  useEffect(() => {
-    loadBedidasYPostres();
-  }, []);
-
-  const loadBedidasYPostres = async () => {
+  const loadBedidasYPostres = useCallback(async () => {
     try {
       setLoadingOptions(true);
       const [bebidasData, postresData] = await Promise.all([
@@ -92,9 +98,9 @@ function EmployeeMenu() {
     } finally {
       setLoadingOptions(false);
     }
-  };
+  }, []);
 
-  const loadMenuAndReservation = async () => {
+  const loadMenuAndReservation = useCallback(async () => {
     if (!user?.id) {
       console.log('No hay usuario autenticado');
       return;
@@ -150,7 +156,20 @@ function EmployeeMenu() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, user?.id]);
+
+  useEffect(() => {
+    setSelectedPrincipal(null);
+    setWantsEntrada(false);
+    setSelectedBebida(null);
+    setSelectedPostre(null);
+    setIsEditing(false);
+    void loadMenuAndReservation();
+  }, [selectedDate, loadMenuAndReservation]);
+
+  useEffect(() => {
+    void loadBedidasYPostres();
+  }, [loadBedidasYPostres]);
 
   const handleReserve = async () => {
     if (!user?.id || !selectedPrincipal) {
@@ -398,9 +417,7 @@ function EmployeeMenu() {
               {menu.entrada_nombre && (
                 <div className="menu-section">
                   <h3>Entrada</h3>
-                  <div className="dish-card">
-                    <span className="dish-name">{menu.entrada_nombre}</span>
-                  </div>
+                  <DishCard name={menu.entrada_nombre} imageUrl={menu.entrada_imagen} />
                 </div>
               )}
 
@@ -410,19 +427,13 @@ function EmployeeMenu() {
                   <h3>Platos Principales</h3>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                     {menu.principal_nombre && (
-                      <div className="dish-card">
-                        <span className="dish-name">{menu.principal_nombre}</span>
-                      </div>
+                      <DishCard name={menu.principal_nombre} imageUrl={menu.principal_imagen} />
                     )}
                     {menu.alternativo_nombre && (
-                      <div className="dish-card">
-                        <span className="dish-name">{menu.alternativo_nombre}</span>
-                      </div>
+                      <DishCard name={menu.alternativo_nombre} imageUrl={menu.alternativo_imagen} />
                     )}
                     {menu.vegetariana_nombre && (
-                      <div className="dish-card">
-                        <span className="dish-name">{menu.vegetariana_nombre} (Vegetariana)</span>
-                      </div>
+                      <DishCard name={`${menu.vegetariana_nombre} (Vegetariana)`} imageUrl={menu.vegetariana_imagen} />
                     )}
                   </div>
                 </div>
@@ -451,9 +462,7 @@ function EmployeeMenu() {
                       <span>Quiero entrada</span>
                     </label>
                   </div>
-                  <div className="dish-card">
-                    <span className="dish-name">{menu.entrada_nombre}</span>
-                  </div>
+                  <DishCard name={menu.entrada_nombre} imageUrl={menu.entrada_imagen} />
                 </div>
               )}
 
@@ -472,7 +481,10 @@ function EmployeeMenu() {
                         onChange={() => setSelectedPrincipal(menu.principal_id!)}
                         disabled={isPastDeadline()}
                       />
-                      <span>{menu.principal_nombre}</span>
+                      <div className="dish-option-content">
+                        <DishImage imageUrl={menu.principal_imagen} name={menu.principal_nombre} />
+                        <span className="dish-name">{menu.principal_nombre}</span>
+                      </div>
                     </label>
                   )}
                   {menu.alternativo_nombre && (
@@ -485,7 +497,10 @@ function EmployeeMenu() {
                         onChange={() => setSelectedPrincipal(menu.alternativo_id!)}
                         disabled={isPastDeadline()}
                       />
-                      <span>{menu.alternativo_nombre}</span>
+                      <div className="dish-option-content">
+                        <DishImage imageUrl={menu.alternativo_imagen} name={menu.alternativo_nombre} />
+                        <span className="dish-name">{menu.alternativo_nombre}</span>
+                      </div>
                     </label>
                   )}
                   {menu.vegetariana_nombre && (
@@ -498,7 +513,10 @@ function EmployeeMenu() {
                         onChange={() => setSelectedPrincipal(menu.vegetariana_id!)}
                         disabled={isPastDeadline()}
                       />
-                      <span>{menu.vegetariana_nombre} (Vegetariana)</span>
+                      <div className="dish-option-content">
+                        <DishImage imageUrl={menu.vegetariana_imagen} name={menu.vegetariana_nombre} />
+                        <span className="dish-name">{menu.vegetariana_nombre} (Vegetariana)</span>
+                      </div>
                     </label>
                   )}
                 </div>
@@ -517,10 +535,13 @@ function EmployeeMenu() {
                           name="postre"
                           value={postre.id}
                           checked={selectedPostre === postre.id}
-                          onChange={() => setSelectedPostre(postre.id)}
-                          disabled={isPastDeadline()}
-                        />
-                        <span>{postre.name}</span>
+                        onChange={() => setSelectedPostre(postre.id)}
+                        disabled={isPastDeadline()}
+                      />
+                        <div className="dish-option-content">
+                          <DishImage imageUrl={postre.imageUrl} name={postre.name} />
+                          <span className="dish-name">{postre.name}</span>
+                        </div>
                       </label>
                     ))}
                   </div>
@@ -539,10 +560,13 @@ function EmployeeMenu() {
                           name="bebida"
                           value={bebida.id}
                           checked={selectedBebida === bebida.id}
-                          onChange={() => setSelectedBebida(bebida.id)}
-                          disabled={isPastDeadline()}
-                        />
-                        <span>{bebida.name}</span>
+                        onChange={() => setSelectedBebida(bebida.id)}
+                        disabled={isPastDeadline()}
+                      />
+                        <div className="dish-option-content">
+                          <DishImage imageUrl={bebida.imageUrl} name={bebida.name} />
+                          <span className="dish-name">{bebida.name}</span>
+                        </div>
                       </label>
                     ))}
                   </div>

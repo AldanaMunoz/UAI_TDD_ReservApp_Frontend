@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import TopNavbar from '../components/Layout/TopNavbar';
+import api from '../services/api';
 import './ReservasDelDia.css';
 
 interface Reserva {
@@ -35,12 +36,6 @@ function ReservasDelDia() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
   useEffect(() => {
-    if (turnoSeleccionado && turnoLocked) {
-      loadReservas();
-    }
-  }, [turnoSeleccionado, turnoLocked]);
-
-  useEffect(() => {
     let filtered = reservas;
 
     // Filtrar por turno seleccionado (siempre)
@@ -63,21 +58,11 @@ function ReservasDelDia() {
     setCurrentPage(1); // Reset a la primera página cuando cambian los filtros
   }, [reservas, searchName, filterTipo, turnoSeleccionado]);
 
-  const loadReservas = async () => {
+  const loadReservas = useCallback(async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/menu/reservas/dia/${fechaSeleccionada}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cargar reservas');
-      }
-
-      const data = await response.json();
+      const response = await api.get(`/menu/reservas/dia/${fechaSeleccionada}`);
+      const data = response.data;
       console.log('Reservas cargadas:', data);
       setReservas(data.reservas || []);
     } catch (error) {
@@ -86,26 +71,18 @@ function ReservasDelDia() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fechaSeleccionada]);
+
+  useEffect(() => {
+    if (turnoSeleccionado && turnoLocked) {
+      void loadReservas();
+    }
+  }, [turnoSeleccionado, turnoLocked, loadReservas]);
 
   const handleAttendanceChange = async (reservaId: number, checked: boolean) => {
     try {
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`http://localhost:3000/api/menu/reservas/${reservaId}/asistencia`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ asistio: checked })
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al actualizar asistencia');
-      }
-
-      const data = await response.json();
+      const response = await api.patch(`/menu/reservas/${reservaId}/asistencia`, { asistio: checked });
+      const data = response.data;
 
       // Actualizar el estado local
       setReservas(prev => prev.map(r =>
@@ -202,21 +179,8 @@ function ReservasDelDia() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`http://localhost:3000/api/menu/reservas/finalizar-turno/${fechaSeleccionada}/${turnoSeleccionado}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al finalizar turno');
-      }
-
-      const data = await response.json();
+      const response = await api.patch(`/menu/reservas/finalizar-turno/${fechaSeleccionada}/${turnoSeleccionado}`);
+      const data = response.data;
       alert(`Turno finalizado. ${data.reservasNoShow} reserva(s) marcada(s) como "No asistió"`);
 
       // Recargar las reservas

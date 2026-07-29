@@ -1,63 +1,59 @@
-import { createContext, useState, useContext, useEffect, type ReactNode } from 'react';
-import { authService, type User, type LoginCredentials, type RegisterData, type LoginResponse } from '../services/authService';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import {
+  authService,
+  type LoginCredentials,
+  type LoginResponse,
+  type User,
+} from '../services/authService';
 
 interface AuthContextType {
   user: User | null;
   login: (credentials: LoginCredentials) => Promise<LoginResponse>;
-  register: (userData: RegisterData) => Promise<{ message: string; userId: number }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      console.log('Token encontrado:', token ? 'Sí' : 'No');
-
-      if (token) {
-        try {
-          console.log('Cargando usuario desde localStorage...');
-          const currentUser = authService.getCurrentUser();
-          console.log('Usuario actual:', currentUser);
-          setUser(currentUser);
-        } catch (error) {
-          console.error('Error al cargar usuario:', error);
-          authService.logout();
-        }
+      if (!localStorage.getItem('token')) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        setUser(await authService.verifyToken());
+      } catch {
+        authService.clearSession();
+      } finally {
+        setLoading(false);
+      }
     };
 
-    initAuth();
+    void initAuth();
   }, []);
 
-  const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
+  const login = async (credentials: LoginCredentials) => {
     const data = await authService.login(credentials);
     setUser(data.user);
     return data;
   };
 
-  const register = async (userData: RegisterData) => {
-    return await authService.register(userData);
-  };
-
-  const logout = () => {
-    authService.logout();
-    setUser(null);
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -65,8 +61,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth debe ser usado dentro de AuthProvider');
-  }
+  if (!context) throw new Error('useAuth debe ser usado dentro de AuthProvider');
   return context;
 };

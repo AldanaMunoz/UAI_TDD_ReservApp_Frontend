@@ -1,92 +1,33 @@
-import { useState, type FormEvent, type ChangeEvent } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { type RegisterData } from '../services/authService';
+import { useAuth } from '../context/AuthContext';
 import './Login.css';
 
-interface FormData extends RegisterData {
-  email: string;
-  password: string;
-}
-
 function Login() {
-  const [isRegister, setIsRegister] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
-    email: '',
-    password: '',
-    nombre: '',
-    apellido: '',
-    turno: 'manana',
-    tipo: 'interno'
-  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const { login, register } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      if (isRegister) {
-        await register(formData);
-        // Guardar temporalmente los datos de registro para usarlos en el login
-        localStorage.setItem('tempUserData', JSON.stringify({
-          email: formData.email,
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          turno: formData.turno,
-          tipo: formData.tipo
-        }));
-        alert('Registro exitoso. Ahora puedes iniciar sesión');
-        setIsRegister(false);
-        setFormData({
-          ...formData,
-          nombre: '',
-          apellido: '',
-          turno: 'manana',
-          tipo: 'interno'
-        });
-      } else {
-        const response = await login({ email: formData.email, password: formData.password });
-
-        // Si hay datos temporales guardados, agregarlos al usuario
-        const tempData = localStorage.getItem('tempUserData');
-        if (tempData) {
-          const parsedData = JSON.parse(tempData);
-          if (parsedData.email === formData.email) {
-            const updatedUser = {
-              ...response.user,
-              nombre: parsedData.nombre,
-              apellido: parsedData.apellido,
-              turno: parsedData.turno,
-              tipo: parsedData.tipo
-            };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            localStorage.removeItem('tempUserData');
-          }
-        }
-
-        // Redirigir según el rol del usuario
-        if (response.user.roles?.includes('Administrador')) {
-          navigate('/');
-        } else {
-          navigate('/menu');
-        }
-      }
+      const response = await login({ email, password });
+      navigate(
+        response.user.roles.includes('Administrador')
+          ? '/reservas-del-dia'
+          : '/menu',
+        { replace: true },
+      );
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.message || 'Error en la operación';
-      setError(typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage));
+      const message =
+        err.response?.data?.message || err.message || 'No se pudo iniciar sesión';
+      setError(typeof message === 'string' ? message : 'No se pudo iniciar sesión');
     } finally {
       setLoading(false);
     }
@@ -96,77 +37,32 @@ function Login() {
     <div className="login-container">
       <div className="login-card">
         <h1>ReservApp</h1>
-        <h2>{isRegister ? 'Registro' : 'Iniciar Sesión'}</h2>
-
-        {error && <div className="error-message">{error}</div>}
+        <h2>Iniciar Sesión</h2>
+        {error && <div className="error-message" role="alert">{error}</div>}
 
         <form onSubmit={handleSubmit}>
-          {isRegister && (
-            <>
-              <input
-                type="text"
-                name="nombre"
-                placeholder="Nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                required
-              />
-              <input
-                type="text"
-                name="apellido"
-                placeholder="Apellido"
-                value={formData.apellido}
-                onChange={handleChange}
-                required
-              />
-              <select 
-                name="turno" 
-                value={formData.turno} 
-                onChange={handleChange}
-              >
-                <option value="manana">Mañana</option>
-                <option value="tarde">Tarde</option>
-                <option value="noche">Noche</option>
-              </select>
-              <select 
-                name="tipo" 
-                value={formData.tipo} 
-                onChange={handleChange}
-              >
-                <option value="interno">Interno</option>
-                <option value="externo">Externo</option>
-              </select>
-            </>
-          )}
-
           <input
             type="email"
             name="email"
             placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            autoComplete="email"
             required
           />
           <input
             type="password"
             name="password"
             placeholder="Contraseña"
-            value={formData.password}
-            onChange={handleChange}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
             required
           />
-
           <button type="submit" disabled={loading}>
-            {loading ? 'Procesando...' : (isRegister ? 'Registrarse' : 'Ingresar')}
+            {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
-
-        <button 
-          className="toggle-button" 
-          onClick={() => setIsRegister(!isRegister)}
-        >
-          {isRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
-        </button>
       </div>
     </div>
   );

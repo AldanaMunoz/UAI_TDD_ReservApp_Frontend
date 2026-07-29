@@ -1,24 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000/api';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
-});
-
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+import api from './api';
 
 export interface Food {
   id?: number;
@@ -27,7 +7,7 @@ export interface Food {
   description?: string;
   type?: string;
   isSpecial?: boolean;
-  imageUrl?: string;
+  imageUrl?: string | null;
   isActive?: boolean;
 }
 
@@ -54,6 +34,20 @@ const foodService = {
 
   async delete(id: number): Promise<{ message: string }> {
     const response = await api.delete(`/foods/hard/${id}`);
+    return response.data;
+  },
+
+  async uploadImage(id: number, image: File): Promise<{ message: string; food: Food }> {
+    const formData = new FormData();
+    formData.append('image', image);
+    const response = await api.patch(`/foods/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  async deleteImage(id: number): Promise<{ message: string; food: Food }> {
+    const response = await api.delete(`/foods/${id}/image`);
     return response.data;
   }
 };

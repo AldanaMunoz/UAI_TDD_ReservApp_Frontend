@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import liquidationService, { type LiquidationDetails, type ReservationDetail } from '../services/liquidationService';
 import './LiquidationDetailsModal.css';
 
@@ -17,13 +17,7 @@ function LiquidationDetailsModal({ isOpen, onClose, liquidationId }: Liquidation
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  useEffect(() => {
-    if (isOpen && liquidationId) {
-      loadDetails();
-    }
-  }, [isOpen, liquidationId]);
-
-  const loadDetails = async () => {
+  const loadDetails = useCallback(async () => {
     if (!liquidationId) return;
 
     try {
@@ -41,7 +35,13 @@ function LiquidationDetailsModal({ isOpen, onClose, liquidationId }: Liquidation
     } finally {
       setLoading(false);
     }
-  };
+  }, [liquidationId]);
+
+  useEffect(() => {
+    if (isOpen && liquidationId) {
+      void loadDetails();
+    }
+  }, [isOpen, liquidationId, loadDetails]);
 
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr + 'T00:00:00');

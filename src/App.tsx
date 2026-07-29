@@ -45,7 +45,7 @@ function PrivateRoute({ children, allowedRoles }: PrivateRouteProps) {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           <Route path="/login" element={<Login />} />
 
@@ -140,7 +140,7 @@ function App() {
           <Route
             path="/menu"
             element={
-              <PrivateRoute allowedRoles={['Empleado']}>
+              <PrivateRoute allowedRoles={['Empleado', 'Cocinero']}>
                 <EmployeeMenu />
               </PrivateRoute>
             }
@@ -148,7 +148,7 @@ function App() {
           <Route
             path="/historial"
             element={
-              <PrivateRoute allowedRoles={['Empleado']}>
+              <PrivateRoute allowedRoles={['Empleado', 'Cocinero']}>
                 <HistorialReservas />
               </PrivateRoute>
             }
@@ -156,7 +156,7 @@ function App() {
           <Route
             path="/planificacion"
             element={
-              <PrivateRoute allowedRoles={['Empleado']}>
+              <PrivateRoute allowedRoles={['Empleado', 'Cocinero']}>
                 <PlanificacionEmpleado />
               </PrivateRoute>
             }

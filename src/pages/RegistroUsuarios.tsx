@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import TopNavbar from '../components/Layout/TopNavbar';
-import api from '../services/authService';
+import api from '../services/api';
 import './RegistroUsuarios.css';
 
 interface Role {

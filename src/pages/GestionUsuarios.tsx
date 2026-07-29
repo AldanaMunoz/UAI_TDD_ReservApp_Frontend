@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
 import TopNavbar from '../components/Layout/TopNavbar';
-import api from '../services/authService';
+import api from '../services/api';
 import './GestionUsuarios.css';
 
 interface Role {
@@ -79,7 +79,7 @@ function GestionUsuarios() {
   const loadUsuarios = async () => {
     try {
       setLoadingUsuarios(true);
-      const response = await api.get('/user-bundle/users');
+      const response = await api.get('/user-bundle');
       setUsuarios(response.data);
       setFilteredUsuarios(response.data);
     } catch (err: any) {
@@ -93,8 +93,11 @@ function GestionUsuarios() {
   const loadRoles = async () => {
     try {
       setLoadingRoles(true);
-      const response = await api.get('/user-bundle/roles');
-      setRoles(response.data);
+      const response = await api.get('/roles');
+      setRoles(response.data.map((role: { id: number; name: string }) => ({
+        id: role.id,
+        nombre: role.name,
+      })));
     } catch (err: any) {
       setError('Error al cargar los roles');
       console.error(err);
@@ -141,8 +144,8 @@ function GestionUsuarios() {
 
     // Obtener el rol del usuario desde el backend
     try {
-      const response = await api.get(`/user-bundle/users/${usuario.id}/roles`);
-      const userRole = response.data[0]?.id || null; // Solo el primer rol
+      const response = await api.get(`/user-roles/by-user/${usuario.id}`);
+      const userRole = response.data[0]?.roleId || null; // Solo el primer rol
 
       setFormData({
         email: usuario.email,
@@ -211,7 +214,7 @@ function GestionUsuarios() {
         await handleUpdateUser(editingUserId);
       } else {
         // Modo creación: crear nuevo usuario
-        await api.post('/user-bundle/create', {
+        await api.post('/user-bundle', {
           user: {
             email: formData.email,
             password: formData.password,
@@ -244,9 +247,19 @@ function GestionUsuarios() {
   };
 
   const handleUpdateUser = async (userId: number) => {
-    // Por ahora, la edición completa requiere endpoints adicionales en el backend
-    // Simplemente mostramos un mensaje de error
-    throw new Error('La edición de usuarios aún no está implementada. Por favor, crea un nuevo usuario con los datos correctos o usa el botón de Activar/Desactivar para cambiar el estado.');
+    const user: Record<string, string | number> = {
+      email: formData.email,
+      activo: formData.activo,
+    };
+    if (formData.password) user.password = formData.password;
+
+    await api.put(`/user-bundle/${userId}`, {
+      user,
+      person: { nombre: formData.nombre, apellido: formData.apellido },
+      employee: { turno: formData.turno, tipo: formData.tipo },
+      roles: [formData.roleId],
+    });
+    setSuccess('Usuario actualizado exitosamente');
   };
 
   const handleToggleActive = async (userId: number, currentStatus: number) => {

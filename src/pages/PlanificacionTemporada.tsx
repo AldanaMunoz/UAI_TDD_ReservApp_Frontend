@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import TopNavbar from '../components/Layout/TopNavbar';
 import WeeklyPlanningModal from '../components/WeeklyPlanningModal';
 import seasonService, { type Season } from '../services/seasonService';
@@ -22,35 +22,21 @@ function PlanificacionTemporada() {
   const [seasonStartDate, setSeasonStartDate] = useState('');
   const [seasonEndDate, setSeasonEndDate] = useState('');
 
-  useEffect(() => {
-    loadSeasons();
-    const now = new Date();
-    setSeasonYear(now.getFullYear().toString());
-  }, []);
-
-  useEffect(() => {
-    if (selectedSeason) {
-      loadWeeklyPlannings(selectedSeason.id!);
-    }
-  }, [selectedSeason]);
-
-  const loadSeasons = async () => {
+  const loadSeasons = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
       const data = await seasonService.getAll();
       setSeasons(data);
-      if (data.length > 0 && !selectedSeason) {
-        setSelectedSeason(data[0]);
-      }
+      setSelectedSeason(current => current || data[0] || null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Error al cargar temporadas');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadWeeklyPlannings = async (seasonId: number) => {
+  const loadWeeklyPlannings = useCallback(async (seasonId: number) => {
     try {
       setLoading(true);
       setError('');
@@ -61,7 +47,19 @@ function PlanificacionTemporada() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadSeasons();
+    const now = new Date();
+    setSeasonYear(now.getFullYear().toString());
+  }, [loadSeasons]);
+
+  useEffect(() => {
+    if (selectedSeason) {
+      void loadWeeklyPlannings(selectedSeason.id!);
+    }
+  }, [selectedSeason, loadWeeklyPlannings]);
 
   const handleCreateSeason = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,11 +185,6 @@ function PlanificacionTemporada() {
       month: '2-digit',
       year: 'numeric'
     });
-  };
-
-  const getDayName = (dayOfWeek: number): string => {
-    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    return days[dayOfWeek];
   };
 
   return (

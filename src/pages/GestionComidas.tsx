@@ -1,6 +1,7 @@
-import { useState, useEffect, type FormEvent, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import TopNavbar from '../components/Layout/TopNavbar';
-import api from '../services/authService';
+import api, { resolveApiAssetUrl } from '../services/api';
+import foodService, { type Food } from '../services/foodService';
 import './GestionComidas.css';
 
 interface FoodType {
@@ -9,531 +10,363 @@ interface FoodType {
   description: string | null;
 }
 
-interface Food {
-  id: number;
-  foodTypeId: number;
-  name: string;
-  isSpecial: boolean;
-  imageUrl: string | null;
-  isActive: boolean;
-}
-
-interface FormData {
+interface FoodForm {
   foodTypeId: number | null;
   name: string;
   isSpecial: boolean;
-  imageUrl: string;
   isActive: boolean;
+}
+
+const EMPTY_FORM: FoodForm = {
+  foodTypeId: null,
+  name: '',
+  isSpecial: false,
+  isActive: true,
+};
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function messageFromError(error: any, fallback: string) {
+  return error?.response?.data?.message || error?.message || fallback;
+}
+
+async function validateJpeg(file: File): Promise<string | null> {
+  if (file.type !== 'image/jpeg' || !/\.jpe?g$/i.test(file.name)) {
+    return 'Selecciona una imagen JPEG con extension .jpg o .jpeg.';
+  }
+  if (file.size > MAX_IMAGE_BYTES) return 'La imagen no puede superar los 5 MB.';
+  if (file.size < 4) return 'El archivo JPEG esta vacio o dañado.';
+
+  const first = new Uint8Array(await file.slice(0, 3).arrayBuffer());
+  const last = new Uint8Array(await file.slice(-2).arrayBuffer());
+  if (first[0] !== 0xff || first[1] !== 0xd8 || first[2] !== 0xff || last[0] !== 0xff || last[1] !== 0xd9) {
+    return 'El contenido del archivo no corresponde a una imagen JPEG valida.';
+  }
+  return null;
+}
+
+function FoodImage({ food, large = false }: { food: Food; large?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  const src = resolveApiAssetUrl(food.imageUrl);
+
+  if (!src || failed) {
+    return <div className={large ? 'food-image-placeholder large' : 'food-image-placeholder'}>Sin imagen</div>;
+  }
+  return (
+    <img
+      className={large ? 'food-image large' : 'food-image'}
+      src={src}
+      alt={`Comida ${food.name}`}
+      onError={() => setFailed(true)}
+    />
+  );
 }
 
 function GestionComidas() {
   const [foods, setFoods] = useState<Food[]>([]);
   const [foodTypes, setFoodTypes] = useState<FoodType[]>([]);
-  const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [showModal, setShowModal] = useState(false);
-
-  // Paginación
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingFoodId, setEditingFoodId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
   const [loadingFoods, setLoadingFoods] = useState(true);
-  const [loadingFoodTypes, setLoadingFoodTypes] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingFood, setEditingFood] = useState<Food | null>(null);
+  const [form, setForm] = useState<FoodForm>(EMPTY_FORM);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [deletingImage, setDeletingImage] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  const [formData, setFormData] = useState<FormData>({
-    foodTypeId: null,
-    name: '',
-    isSpecial: false,
-    imageUrl: '',
-    isActive: true
-  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    loadFoods();
-    loadFoodTypes();
+    void Promise.all([loadFoods(), loadFoodTypes()]);
   }, []);
 
-  useEffect(() => {
-    const filtered = foods.filter((food) =>
-      food.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredFoods(filtered);
-    setCurrentPage(1); // Reset a la primera página cuando cambian los filtros
-  }, [searchTerm, foods]);
+  useEffect(() => () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+  }, [previewUrl]);
 
-  const loadFoods = async () => {
+  const filteredFoods = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    return term ? foods.filter(food => food.name.toLowerCase().includes(term)) : foods;
+  }, [foods, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredFoods.length / itemsPerPage));
+  const page = Math.min(currentPage, totalPages);
+  const startIndex = (page - 1) * itemsPerPage;
+  const visibleFoods = filteredFoods.slice(startIndex, startIndex + itemsPerPage);
+
+  async function loadFoods() {
     try {
       setLoadingFoods(true);
-      const response = await api.get('/foods');
-      setFoods(response.data);
-      setFilteredFoods(response.data);
-    } catch (err: any) {
-      setError('Error al cargar las comidas');
-      console.error(err);
+      setFoods(await foodService.getAll());
+    } catch (loadError) {
+      setError(messageFromError(loadError, 'Error al cargar las comidas.'));
     } finally {
       setLoadingFoods(false);
     }
-  };
+  }
 
-  const loadFoodTypes = async () => {
+  async function loadFoodTypes() {
     try {
-      setLoadingFoodTypes(true);
       const response = await api.get('/food-types');
       setFoodTypes(response.data);
-    } catch (err: any) {
-      setError('Error al cargar los tipos de comida');
-      console.error(err);
-    } finally {
-      setLoadingFoodTypes(false);
+    } catch (loadError) {
+      setError(messageFromError(loadError, 'Error al cargar los tipos de comida.'));
     }
-  };
+  }
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type } = e.target;
+  function replaceFood(updated: Food) {
+    setFoods(current => current.map(food => food.id === updated.id ? updated : food));
+    setEditingFood(updated);
+  }
 
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setFormData({
-        ...formData,
-        [name]: checked
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-    }
-  };
+  function clearSelectedImage() {
+    setSelectedImage(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  }
 
-  const handleOpenModal = () => {
-    setIsEditMode(false);
-    setEditingFoodId(null);
-    setFormData({
-      foodTypeId: null,
-      name: '',
-      isSpecial: false,
-      imageUrl: '',
-      isActive: true
-    });
+  function openCreateModal() {
+    setEditingFood(null);
+    setForm(EMPTY_FORM);
+    clearSelectedImage();
     setError('');
-    setSuccess('');
     setShowModal(true);
-  };
+  }
 
-  const handleOpenEditModal = (food: Food) => {
-    setIsEditMode(true);
-    setEditingFoodId(food.id);
-    setFormData({
-      foodTypeId: food.foodTypeId,
+  function openEditModal(food: Food) {
+    setEditingFood(food);
+    setForm({
+      foodTypeId: food.foodTypeId ?? null,
       name: food.name,
       isSpecial: Boolean(food.isSpecial),
-      imageUrl: food.imageUrl || '',
-      isActive: Boolean(food.isActive)
+      isActive: Boolean(food.isActive),
     });
+    clearSelectedImage();
     setError('');
-    setSuccess('');
     setShowModal(true);
-  };
+  }
 
-  const handleCloseModal = () => {
+  function closeModal() {
+    if (saving || uploading || deletingImage) return;
     setShowModal(false);
-    setIsEditMode(false);
-    setEditingFoodId(null);
-    setFormData({
-      foodTypeId: null,
-      name: '',
-      isSpecial: false,
-      imageUrl: '',
-      isActive: true
-    });
-    setError('');
-  };
+    clearSelectedImage();
+    setEditingFood(null);
+  }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  function handleChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+    const { name, type } = event.target;
+    const value = type === 'checkbox' ? (event.target as HTMLInputElement).checked : event.target.value;
+    setForm(current => ({
+      ...current,
+      [name]: name === 'foodTypeId' ? Number(value) || null : value,
+    }));
+  }
+
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return clearSelectedImage();
+    const validationError = await validateJpeg(file);
+    if (validationError) {
+      clearSelectedImage();
+      setError(validationError);
+      return;
+    }
+    setError('');
+    setSelectedImage(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!form.foodTypeId) return setError('Selecciona un tipo de comida.');
+    setSaving(true);
     setError('');
     setSuccess('');
-    setLoading(true);
 
-    if (!formData.foodTypeId) {
-      setError('Debe seleccionar un tipo de comida');
-      setLoading(false);
-      return;
-    }
-
+    let savedFood: Food | undefined;
+    const foodPayload: Food = { ...form, foodTypeId: form.foodTypeId };
     try {
-      if (isEditMode && editingFoodId) {
-        await api.patch(`/foods/${editingFoodId}`, formData);
-        setSuccess('Comida actualizada exitosamente');
+      if (editingFood?.id) {
+        const response = await foodService.update(editingFood.id, foodPayload);
+        savedFood = response.food;
+        replaceFood(savedFood);
       } else {
-        await api.post('/foods', formData);
-        setSuccess('Comida creada exitosamente');
+        savedFood = await foodService.create(foodPayload);
+        setFoods(current => [savedFood!, ...current]);
       }
 
-      setTimeout(() => {
-        handleCloseModal();
-        loadFoods();
-      }, 1500);
-    } catch (err: any) {
-      const errorMessage = err.response?.data?.message || err.message ||
-        (isEditMode ? 'Error al actualizar comida' : 'Error al crear comida');
-      setError(errorMessage);
+      if (selectedImage && savedFood.id) {
+        setUploading(true);
+        try {
+          const response = await foodService.uploadImage(savedFood.id, selectedImage);
+          savedFood = response.food;
+          replaceFood(savedFood);
+        } catch (imageError) {
+          setError(`La comida se guardo, pero no se pudo subir la imagen: ${messageFromError(imageError, 'error de carga')}`);
+          setShowModal(false);
+          clearSelectedImage();
+          return;
+        } finally {
+          setUploading(false);
+        }
+      }
+
+      setSuccess(editingFood ? 'Comida actualizada correctamente.' : 'Comida creada correctamente.');
+      setShowModal(false);
+      clearSelectedImage();
+    } catch (saveError) {
+      setError(messageFromError(saveError, 'No se pudo guardar la comida.'));
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  };
+  }
 
-  const handleToggleActive = async (foodId: number, currentStatus: boolean) => {
+  async function handleDeleteImage() {
+    if (!editingFood?.id || !editingFood.imageUrl) return;
+    if (!window.confirm(`¿Quitar la imagen de ${editingFood.name}?`)) return;
     try {
-      await api.patch(`/foods/${foodId}`, {
-        isActive: !currentStatus
-      });
-      loadFoods();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cambiar estado de la comida');
+      setDeletingImage(true);
+      setError('');
+      const response = await foodService.deleteImage(editingFood.id);
+      replaceFood(response.food);
+      setSuccess('Imagen eliminada correctamente.');
+    } catch (deleteError) {
+      setError(messageFromError(deleteError, 'No se pudo eliminar la imagen.'));
+    } finally {
+      setDeletingImage(false);
     }
-  };
+  }
 
-  const handleDelete = async (foodId: number, foodName: string) => {
-    if (!window.confirm(`¿Está seguro de eliminar la comida "${foodName}"? Esta acción no se puede deshacer.`)) {
-      return;
-    }
-
+  async function handleToggleActive(food: Food) {
+    if (!food.id) return;
     try {
-      await api.delete(`/foods/hard/${foodId}`);
-      loadFoods();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al eliminar la comida');
+      const response = await foodService.update(food.id, { isActive: !food.isActive });
+      replaceFood(response.food);
+    } catch (toggleError) {
+      setError(messageFromError(toggleError, 'No se pudo cambiar el estado.'));
     }
-  };
+  }
 
-  const getFoodTypeName = (foodTypeId: number): string => {
-    const type = foodTypes.find(t => t.id === foodTypeId);
-    return type?.name || '-';
-  };
-
-  // Calcular paginación
-  const totalPages = Math.ceil(filteredFoods.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedFoods = filteredFoods.slice(startIndex, endIndex);
-
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+  async function handleDelete(food: Food) {
+    if (!food.id || !window.confirm(`¿Eliminar permanentemente ${food.name}?`)) return;
+    try {
+      await foodService.delete(food.id);
+      setFoods(current => current.filter(item => item.id !== food.id));
+      setSuccess('Comida eliminada correctamente.');
+    } catch (deleteError) {
+      setError(messageFromError(deleteError, 'No se pudo eliminar la comida.'));
     }
-  };
-
-  const handleItemsPerPageChange = (value: number) => {
-    setItemsPerPage(value);
-    setCurrentPage(1);
-  };
-
-  // Generar números de página a mostrar (con elipsis)
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxVisible = 7;
-
-    if (totalPages <= maxVisible) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      pages.push(1);
-
-      if (currentPage <= 3) {
-        for (let i = 2; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push('...');
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push('...');
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push('...');
-        pages.push(currentPage - 1);
-        pages.push(currentPage);
-        pages.push(currentPage + 1);
-        pages.push('...');
-        pages.push(totalPages);
-      }
-    }
-
-    return pages;
-  };
+  }
 
   return (
     <>
       <TopNavbar />
-      <div className="main-content">
-        <div className="page-header">
+      <main className="main-content foods-page">
+        <header className="page-header">
           <div>
-            <h1>Gestión de Comidas</h1>
-            <p className="subtitle">Administrar comidas del sistema</p>
+            <h1>Gestion de Comidas</h1>
+            <p className="subtitle">Administra el catalogo y sus imagenes</p>
           </div>
-          <button className="btn-create" onClick={handleOpenModal}>
-            + Crear Comida
-          </button>
-        </div>
+          <button className="btn-create" onClick={openCreateModal}>Crear comida</button>
+        </header>
 
-        <div className="search-container">
+        {error && <div className="alert alert-error" role="alert">{error}</div>}
+        {success && <div className="alert alert-success" role="status">{success}</div>}
+
+        <div className="foods-toolbar">
+          <label className="search-label" htmlFor="food-search">Buscar comidas</label>
           <input
-            type="text"
-            placeholder="Buscar por nombre..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            id="food-search"
             className="search-input"
+            type="search"
+            value={searchTerm}
+            onChange={event => { setSearchTerm(event.target.value); setCurrentPage(1); }}
+            placeholder="Nombre de la comida"
           />
         </div>
 
-        {loadingFoods ? (
-          <div className="loading-state">Cargando comidas...</div>
-        ) : (
+        {loadingFoods ? <div className="loading-state">Cargando comidas...</div> : (
           <div className="table-container">
             <table className="comidas-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Nombre</th>
-                  <th>Tipo</th>
-                  <th>Especial</th>
-                  <th>Estado</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Imagen</th><th>Nombre</th><th>Tipo</th><th>Clase</th><th>Estado</th><th>Acciones</th></tr></thead>
               <tbody>
-                {filteredFoods.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="no-data">
-                      {searchTerm ? 'No se encontraron comidas' : 'No hay comidas registradas'}
-                    </td>
+                {!visibleFoods.length ? (
+                  <tr><td colSpan={6} className="no-data">No se encontraron comidas.</td></tr>
+                ) : visibleFoods.map(food => (
+                  <tr key={food.id}>
+                    <td><FoodImage food={food} /></td>
+                    <td className="food-name">{food.name}</td>
+                    <td>{foodTypes.find(type => type.id === food.foodTypeId)?.name || '-'}</td>
+                    <td><span className={`badge ${food.isSpecial ? 'badge-special' : 'badge-regular'}`}>{food.isSpecial ? 'Especial' : 'Regular'}</span></td>
+                    <td><span className={`badge ${food.isActive ? 'badge-active' : 'badge-inactive'}`}>{food.isActive ? 'Activa' : 'Inactiva'}</span></td>
+                    <td><div className="action-buttons">
+                      <button className="action-button" onClick={() => openEditModal(food)}>Editar</button>
+                      <button className="action-button" onClick={() => void handleToggleActive(food)}>{food.isActive ? 'Desactivar' : 'Activar'}</button>
+                      <button className="action-button danger" onClick={() => void handleDelete(food)}>Eliminar</button>
+                    </div></td>
                   </tr>
-                ) : (
-                  paginatedFoods.map((food) => (
-                    <tr key={food.id}>
-                      <td>{food.id}</td>
-                      <td>{food.name}</td>
-                      <td>{getFoodTypeName(food.foodTypeId)}</td>
-                      <td>
-                        <span className={`badge ${food.isSpecial ? 'badge-special' : 'badge-regular'}`}>
-                          {food.isSpecial ? 'Especial' : 'Regular'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${food.isActive ? 'badge-active' : 'badge-inactive'}`}>
-                          {food.isActive ? 'Activa' : 'Inactiva'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            className="btn-edit"
-                            onClick={() => handleOpenEditModal(food)}
-                            title="Editar comida"
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                          </button>
-                          <button
-                            className={`btn-toggle ${food.isActive ? 'btn-deactivate' : 'btn-activate'}`}
-                            onClick={() => handleToggleActive(food.id, food.isActive)}
-                            title={food.isActive ? 'Desactivar' : 'Activar'}
-                          >
-                            {food.isActive ? (
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="15" y1="9" x2="9" y2="15"></line>
-                                <line x1="9" y1="9" x2="15" y2="15"></line>
-                              </svg>
-                            ) : (
-                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                              </svg>
-                            )}
-                          </button>
-                          <button
-                            className="btn-delete"
-                            onClick={() => handleDelete(food.id, food.name)}
-                            title="Eliminar comida"
-                          >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="3 6 5 6 21 6"></polyline>
-                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              <line x1="10" y1="11" x2="10" y2="17"></line>
-                              <line x1="14" y1="11" x2="14" y2="17"></line>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
         )}
 
-        {!loadingFoods && filteredFoods.length > 0 && (
-          <div className="pagination-container">
-            <div className="pagination-info">
-              <span>Mostrando {startIndex + 1} - {Math.min(endIndex, filteredFoods.length)} de {filteredFoods.length} registros</span>
-              <div className="items-per-page">
-                <label htmlFor="items-per-page">Registros por página:</label>
-                <select
-                  id="items-per-page"
-                  value={itemsPerPage}
-                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
-                  className="page-size-select"
-                >
-                  <option value={5}>5</option>
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+        {!loadingFoods && filteredFoods.length > 0 && <div className="pagination-container">
+          <span>Mostrando {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredFoods.length)} de {filteredFoods.length}</span>
+          <label>Filas <select value={itemsPerPage} onChange={event => { setItemsPerPage(Number(event.target.value)); setCurrentPage(1); }}>
+            {[5, 10, 25, 50].map(size => <option key={size} value={size}>{size}</option>)}
+          </select></label>
+          <div className="pagination-controls">
+            <button disabled={page === 1} onClick={() => setCurrentPage(page - 1)}>Anterior</button>
+            <span>Pagina {page} de {totalPages}</span>
+            <button disabled={page === totalPages} onClick={() => setCurrentPage(page + 1)}>Siguiente</button>
+          </div>
+        </div>}
+      </main>
+
+      {showModal && <div className="modal-overlay" onMouseDown={event => event.target === event.currentTarget && closeModal()}>
+        <section className="modal-content" role="dialog" aria-modal="true" aria-labelledby="food-modal-title">
+          <header className="modal-header">
+            <h2 id="food-modal-title">{editingFood ? 'Editar comida' : 'Crear comida'}</h2>
+            <button className="modal-close" onClick={closeModal} aria-label="Cerrar">×</button>
+          </header>
+          <form onSubmit={handleSubmit} className="modal-form">
+            <div className="food-form-grid">
+              <div className="form-fields">
+                <label>Nombre<input name="name" value={form.name} onChange={handleChange} minLength={2} maxLength={160} required /></label>
+                <label>Tipo<select name="foodTypeId" value={form.foodTypeId || ''} onChange={handleChange} required>
+                  <option value="">Seleccionar tipo</option>
+                  {foodTypes.map(type => <option key={type.id} value={type.id}>{type.name}</option>)}
+                </select></label>
+                <label className="checkbox-item"><input type="checkbox" name="isSpecial" checked={form.isSpecial} onChange={handleChange} />Comida especial</label>
+                <label className="checkbox-item"><input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} />Comida activa</label>
               </div>
-            </div>
-
-            {totalPages > 1 && (
-              <div className="pagination-controls">
-                <button
-                  onClick={() => goToPage(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="pagination-btn"
-                >
-                  ← Anterior
-                </button>
-
-                <div className="pagination-pages">
-                  {getPageNumbers().map((page, index) => (
-                    page === '...' ? (
-                      <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>
-                    ) : (
-                      <button
-                        key={page}
-                        onClick={() => goToPage(page as number)}
-                        className={`pagination-page ${currentPage === page ? 'active' : ''}`}
-                      >
-                        {page}
-                      </button>
-                    )
-                  ))}
+              <div className="image-editor">
+                <span className="image-editor-label">Imagen JPEG</span>
+                {previewUrl ? <img className="food-image large" src={previewUrl} alt="Vista previa de la imagen seleccionada" /> : editingFood ? <FoodImage food={editingFood} large /> : <div className="food-image-placeholder large">Sin imagen</div>}
+                <input ref={fileInputRef} id="food-image" type="file" accept="image/jpeg,.jpg,.jpeg" onChange={event => void handleImageChange(event)} />
+                <p className="image-help">JPG o JPEG, maximo 5 MB.</p>
+                <div className="image-actions">
+                  {selectedImage && <button type="button" className="action-button" onClick={clearSelectedImage}>Cancelar seleccion</button>}
+                  {editingFood?.imageUrl && !selectedImage && <button type="button" className="action-button danger" disabled={deletingImage} onClick={() => void handleDeleteImage()}>{deletingImage ? 'Quitando...' : 'Quitar imagen'}</button>}
                 </div>
-
-                <button
-                  onClick={() => goToPage(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="pagination-btn"
-                >
-                  Siguiente →
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {showModal && (
-          <div className="modal-overlay" onClick={handleCloseModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>{isEditMode ? 'Editar Comida' : 'Crear Nueva Comida'}</h2>
-                <button className="modal-close" onClick={handleCloseModal}>
-                  &times;
-                </button>
-              </div>
-
-              <div className="modal-body">
-                {error && <div className="alert alert-error">{error}</div>}
-                {success && <div className="alert alert-success">{success}</div>}
-
-                <form onSubmit={handleSubmit} className="modal-form">
-                  <div className="form-section">
-                    <h3>Información de la Comida</h3>
-                    <div className="form-group">
-                      <label htmlFor="name">Nombre *</label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
-                        minLength={2}
-                        maxLength={160}
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label htmlFor="foodTypeId">Tipo de Comida *</label>
-                      <select
-                        id="foodTypeId"
-                        name="foodTypeId"
-                        value={formData.foodTypeId || ''}
-                        onChange={handleChange}
-                        required
-                      >
-                        <option value="">Seleccionar tipo...</option>
-                        {loadingFoodTypes ? (
-                          <option disabled>Cargando tipos...</option>
-                        ) : (
-                          foodTypes.map((type) => (
-                            <option key={type.id} value={type.id}>
-                              {type.name}
-                            </option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    <div className="form-checkboxes">
-                      <div className="checkbox-item">
-                        <input
-                          type="checkbox"
-                          id="isSpecial"
-                          name="isSpecial"
-                          checked={formData.isSpecial}
-                          onChange={handleChange}
-                        />
-                        <label htmlFor="isSpecial">Es comida especial</label>
-                      </div>
-
-                      <div className="checkbox-item">
-                        <input
-                          type="checkbox"
-                          id="isActive"
-                          name="isActive"
-                          checked={formData.isActive}
-                          onChange={handleChange}
-                        />
-                        <label htmlFor="isActive">Comida activa</label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="form-actions">
-                    <button type="button" onClick={handleCloseModal} className="btn-secondary">
-                      Cancelar
-                    </button>
-                    <button type="submit" disabled={loading} className="btn-primary">
-                      {loading ? (isEditMode ? 'Actualizando...' : 'Creando...') : (isEditMode ? 'Actualizar Comida' : 'Crear Comida')}
-                    </button>
-                  </div>
-                </form>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+            {error && <div className="alert alert-error" role="alert">{error}</div>}
+            <div className="form-actions">
+              <button type="button" className="btn-secondary" onClick={closeModal}>Cancelar</button>
+              <button type="submit" className="btn-primary" disabled={saving || uploading || deletingImage}>
+                {uploading ? 'Subiendo imagen...' : saving ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>}
     </>
   );
 }
