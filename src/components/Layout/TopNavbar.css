@@ -38,6 +38,13 @@
   transform: scale(1.05);
 }
 
+.navbar-logo {
+  display: block;
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+}
+
 .navbar-brand h1 {
   margin: 0;
   font-size: 1.5rem;
@@ -374,6 +381,11 @@
 
   .navbar-brand h1 {
     font-size: 1.25rem;
+  }
+
+  .navbar-logo {
+    width: 46px;
+    height: 46px;
   }
 
   .user-button {

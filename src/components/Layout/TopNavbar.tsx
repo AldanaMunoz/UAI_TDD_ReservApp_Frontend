@@ -71,7 +71,7 @@ function TopNavbar() {
       <div className="navbar-container">
         {/* Logo */}
         <div className="navbar-brand" onClick={() => navigate('/')}>
-          <h1>ReservApp</h1>
+          <img src="/logo192.png" alt="ReservApp" className="navbar-logo" />
         </div>
 
         {/* Navigation Links - Desktop */}
