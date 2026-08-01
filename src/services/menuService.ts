@@ -26,6 +26,12 @@ export interface MenuDelDia {
   vegetariana_id?: number;
   vegetariana_nombre?: string;
   vegetariana_imagen?: string;
+  postre_id?: number;
+  postre_nombre?: string;
+  postre_imagen?: string;
+  bebida_id?: number;
+  bebida_nombre?: string;
+  bebida_imagen?: string;
 }
 
 export interface Reserva {

@@ -106,7 +106,13 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .badge-inactive { color: #8b2e2e; background: #f8dddd; }
 .badge-special { color: #654b0d; background: #f8e9b9; }
 .badge-regular { color: #46504a; background: #e6e9e7; }
-.action-buttons { gap: 7px; white-space: nowrap; }
+.comidas-table td:last-child { vertical-align: middle; }
+.action-buttons {
+  min-height: 52px;
+  gap: 7px;
+  align-items: center;
+  white-space: nowrap;
+}
 
 .alert { border-radius: 6px; padding: 12px 14px; margin: 0 0 18px; }
 .alert-error { color: #872525; background: #fff0f0; border: 1px solid #edb9b9; }
@@ -157,6 +163,14 @@ button:disabled { cursor: not-allowed; opacity: .55; }
 .checkbox-item input { width: 18px; height: 18px; accent-color: #376b49; }
 .image-editor { display: flex; flex-direction: column; gap: 11px; }
 .image-help { margin: 0; color: #687169; font-size: 13px; }
+.image-file-name {
+  margin: 0;
+  color: #2f5f41;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.image-file-name.invalid { color: #872525; }
 .image-actions { gap: 8px; flex-wrap: wrap; }
 .form-actions { justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 18px; border-top: 1px solid #e2e6e3; }
 

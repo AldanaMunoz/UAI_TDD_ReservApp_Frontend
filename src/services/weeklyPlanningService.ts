@@ -36,6 +36,8 @@ export interface DayMealAssignments {
   principalId: number | null;
   alternativoId: number | null;
   vegetarianoId: number | null;
+  postreId: number | null;
+  bebidaId: number | null;
 }
 
 const weeklyPlanningService = {

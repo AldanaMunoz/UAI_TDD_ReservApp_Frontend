@@ -179,6 +179,18 @@ function PlanificacionEmpleado() {
                           )}
                         </ul>
                       </div>
+
+                      {item.menu.postre_nombre && (
+                        <div className="menu-item">
+                          <strong>Postre:</strong> {item.menu.postre_nombre}
+                        </div>
+                      )}
+
+                      {item.menu.bebida_nombre && (
+                        <div className="menu-item">
+                          <strong>Bebida:</strong> {item.menu.bebida_nombre}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <p className="no-menu">

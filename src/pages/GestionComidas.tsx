@@ -31,8 +31,8 @@ function messageFromError(error: any, fallback: string) {
 }
 
 async function validateJpeg(file: File): Promise<string | null> {
-  if (file.type !== 'image/jpeg' || !/\.jpe?g$/i.test(file.name)) {
-    return 'Selecciona una imagen JPEG con extension .jpg o .jpeg.';
+  if (!/\.jpe?g$/i.test(file.name)) {
+    return 'Formato no permitido: el archivo debe terminar en .jpg o .jpeg.';
   }
   if (file.size > MAX_IMAGE_BYTES) return 'La imagen no puede superar los 5 MB.';
   if (file.size < 4) return 'El archivo JPEG esta vacio o dañado.';
@@ -40,7 +40,7 @@ async function validateJpeg(file: File): Promise<string | null> {
   const first = new Uint8Array(await file.slice(0, 3).arrayBuffer());
   const last = new Uint8Array(await file.slice(-2).arrayBuffer());
   if (first[0] !== 0xff || first[1] !== 0xd8 || first[2] !== 0xff || last[0] !== 0xff || last[1] !== 0xd9) {
-    return 'El contenido del archivo no corresponde a una imagen JPEG valida.';
+    return 'La extension es .jpg/.jpeg, pero el contenido real no es JPEG. Converti la imagen a JPG antes de subirla.';
   }
   return null;
 }
@@ -73,6 +73,7 @@ function GestionComidas() {
   const [editingFood, setEditingFood] = useState<Food | null>(null);
   const [form, setForm] = useState<FoodForm>(EMPTY_FORM);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImageName, setSelectedImageName] = useState('');
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -126,6 +127,7 @@ function GestionComidas() {
 
   function clearSelectedImage() {
     setSelectedImage(null);
+    setSelectedImageName('');
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }
@@ -170,12 +172,17 @@ function GestionComidas() {
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return clearSelectedImage();
+
+    setSelectedImage(null);
+    setSelectedImageName(file.name);
+    setPreviewUrl(null);
+
     const validationError = await validateJpeg(file);
     if (validationError) {
-      clearSelectedImage();
       setError(validationError);
       return;
     }
+
     setError('');
     setSelectedImage(file);
     setPreviewUrl(URL.createObjectURL(file));
@@ -350,7 +357,8 @@ function GestionComidas() {
                 <span className="image-editor-label">Imagen JPEG</span>
                 {previewUrl ? <img className="food-image large" src={previewUrl} alt="Vista previa de la imagen seleccionada" /> : editingFood ? <FoodImage food={editingFood} large /> : <div className="food-image-placeholder large">Sin imagen</div>}
                 <input ref={fileInputRef} id="food-image" type="file" accept="image/jpeg,.jpg,.jpeg" onChange={event => void handleImageChange(event)} />
-                <p className="image-help">JPG o JPEG, maximo 5 MB.</p>
+                <p className="image-help">Solo JPG o JPEG, maximo 5 MB.</p>
+                {selectedImageName && <p className={selectedImage ? 'image-file-name' : 'image-file-name invalid'}>{selectedImageName}</p>}
                 <div className="image-actions">
                   {selectedImage && <button type="button" className="action-button" onClick={clearSelectedImage}>Cancelar seleccion</button>}
                   {editingFood?.imageUrl && !selectedImage && <button type="button" className="action-button danger" disabled={deletingImage} onClick={() => void handleDeleteImage()}>{deletingImage ? 'Quitando...' : 'Quitar imagen'}</button>}

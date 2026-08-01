@@ -33,7 +33,6 @@ body {
 .action-buttons {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 .btn {

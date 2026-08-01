@@ -1,5 +1,5 @@
 body {
-  background: #E6F8B2;
+  background: #e6f8b2;
   min-height: 100vh;
 }
 
@@ -33,7 +33,6 @@ body {
 .action-buttons {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
 }
 
 .btn {
@@ -239,7 +238,7 @@ body {
   align-items: flex-start;
   margin-bottom: 1rem;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid #E6F8B2;
+  border-bottom: 2px solid #e6f8b2;
 }
 
 .season-header h3 {

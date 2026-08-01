@@ -23,6 +23,8 @@ const DAYS_OF_WEEK = [
 const MEAL_TYPES = {
   ENTRADA: 1,
   PRINCIPAL: 2,
+  POSTRE: 3,
+  BEBIDA: 4,
   ALTERNATIVO: 5,
   VEGETARIANO: 6
 };
@@ -32,6 +34,8 @@ interface DayMealAssignments {
   principalId: number | null;
   alternativoId: number | null;
   vegetarianoId: number | null;
+  postreId: number | null;
+  bebidaId: number | null;
 }
 
 interface SearchableSelectProps {
@@ -76,7 +80,7 @@ function SearchableSelect({ value, onChange, options, placeholder, required }: S
   };
 
   return (
-    <div className="searchable-select" ref={wrapperRef}>
+    <div className={`searchable-select ${isOpen ? 'is-open' : ''}`} ref={wrapperRef}>
       <div className="searchable-select-input">
         <input
           type="text"
@@ -152,7 +156,9 @@ function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: Weekly
           entradaId: null,
           principalId: null,
           alternativoId: null,
-          vegetarianoId: null
+          vegetarianoId: null,
+          postreId: null,
+          bebidaId: null
         };
       });
       setSelectedMeals(initialSelected);
@@ -165,7 +171,9 @@ function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: Weekly
           entradaId: null,
           principalId: null,
           alternativoId: null,
-          vegetarianoId: null
+          vegetarianoId: null,
+          postreId: null,
+          bebidaId: null
         };
       });
       setSelectedMeals(initialSelected);
@@ -321,6 +329,28 @@ function WeeklyPlanningModal({ isOpen, onClose, weeklyPlanning, onSave }: Weekly
                       options={getMealsByType(MEAL_TYPES.VEGETARIANO)}
                       placeholder="Buscar plato vegetariano..."
                       required
+                    />
+                  </div>
+
+                  {/* Postre - Optional */}
+                  <div className="meal-type-row">
+                    <label>Postre (Opcional)</label>
+                    <SearchableSelect
+                      value={selectedMeals[day.value]?.postreId || null}
+                      onChange={(value) => handleMealChange(day.value, 'postreId', value)}
+                      options={getMealsByType(MEAL_TYPES.POSTRE)}
+                      placeholder="Buscar postre..."
+                    />
+                  </div>
+
+                  {/* Bebida - Optional */}
+                  <div className="meal-type-row">
+                    <label>Bebida (Opcional)</label>
+                    <SearchableSelect
+                      value={selectedMeals[day.value]?.bebidaId || null}
+                      onChange={(value) => handleMealChange(day.value, 'bebidaId', value)}
+                      options={getMealsByType(MEAL_TYPES.BEBIDA)}
+                      placeholder="Buscar bebida..."
                     />
                   </div>
                 </div>

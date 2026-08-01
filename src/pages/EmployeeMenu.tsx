@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import TopNavbar from '../components/Layout/TopNavbar';
-import menuService, { type MenuDelDia, type Reserva, type MenuItem } from '../services/menuService';
+import menuService, { type MenuDelDia, type Reserva } from '../services/menuService';
 import { resolveApiAssetUrl } from '../services/api';
 import '../styles/dashboard.css';
 import './EmployeeMenu.css';
@@ -42,11 +42,6 @@ function EmployeeMenu() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Listas de bebidas y postres disponibles
-  const [bebidas, setBebidas] = useState<MenuItem[]>([]);
-  const [postres, setPostres] = useState<MenuItem[]>([]);
-  const [loadingOptions, setLoadingOptions] = useState(true);
-
   // Selecciones del usuario
   const [selectedPrincipal, setSelectedPrincipal] = useState<number | null>(null);
   const [wantsEntrada, setWantsEntrada] = useState(false);
@@ -84,22 +79,6 @@ function EmployeeMenu() {
     return true;
   };
 
-  const loadBedidasYPostres = useCallback(async () => {
-    try {
-      setLoadingOptions(true);
-      const [bebidasData, postresData] = await Promise.all([
-        menuService.getBebidas(),
-        menuService.getPostres()
-      ]);
-      setBebidas(bebidasData);
-      setPostres(postresData);
-    } catch (err) {
-      console.error('Error cargando bebidas y postres:', err);
-    } finally {
-      setLoadingOptions(false);
-    }
-  }, []);
-
   const loadMenuAndReservation = useCallback(async () => {
     if (!user?.id) {
       console.log('No hay usuario autenticado');
@@ -120,6 +99,8 @@ function EmployeeMenu() {
       console.log('Principal nombre:', menuData.menu?.principal_nombre);
       console.log('Alternativo nombre:', menuData.menu?.alternativo_nombre);
       console.log('Vegetariana nombre:', menuData.menu?.vegetariana_nombre);
+      console.log('Postre nombre:', menuData.menu?.postre_nombre);
+      console.log('Bebida nombre:', menuData.menu?.bebida_nombre);
       setMenu(menuData.menu);
 
       // Verificar si ya tiene reserva (solo si hay menú)
@@ -167,9 +148,17 @@ function EmployeeMenu() {
     void loadMenuAndReservation();
   }, [selectedDate, loadMenuAndReservation]);
 
-  useEffect(() => {
-    void loadBedidasYPostres();
-  }, [loadBedidasYPostres]);
+  const validateSelectedMenuItems = () => {
+    if (selectedPostre && selectedPostre !== menu?.postre_id) {
+      setError('El postre seleccionado no esta disponible en este menu');
+      return false;
+    }
+    if (selectedBebida && selectedBebida !== menu?.bebida_id) {
+      setError('La bebida seleccionada no esta disponible en este menu');
+      return false;
+    }
+    return true;
+  };
 
   const handleReserve = async () => {
     if (!user?.id || !selectedPrincipal) {
@@ -188,6 +177,7 @@ function EmployeeMenu() {
       setError('El plato principal seleccionado no está disponible en este menú');
       return;
     }
+    if (!validateSelectedMenuItems()) return;
 
     setLoading(true);
     setError('');
@@ -230,8 +220,8 @@ function EmployeeMenu() {
     setIsEditing(true);
     setWantsEntrada(!!reservation.id_comida_entrada);
     setSelectedPrincipal(reservation.id_comida_principal || null);
-    setSelectedPostre(reservation.id_comida_postre || null);
-    setSelectedBebida(reservation.id_comida_bebida || null);
+    setSelectedPostre(reservation.id_comida_postre === menu?.postre_id ? reservation.id_comida_postre ?? null : null);
+    setSelectedBebida(reservation.id_comida_bebida === menu?.bebida_id ? reservation.id_comida_bebida ?? null : null);
   };
 
   const handleSaveModification = async () => {
@@ -246,6 +236,8 @@ function EmployeeMenu() {
       setError('El plato principal seleccionado no está disponible en este menú');
       return;
     }
+
+    if (!validateSelectedMenuItems()) return;
 
     setLoading(true);
     setError('');
@@ -438,6 +430,20 @@ function EmployeeMenu() {
                   </div>
                 </div>
               )}
+
+              {menu.postre_nombre && (
+                <div className="menu-section">
+                  <h3>Postre</h3>
+                  <DishCard name={menu.postre_nombre} imageUrl={menu.postre_imagen} />
+                </div>
+              )}
+
+              {menu.bebida_nombre && (
+                <div className="menu-section">
+                  <h3>Bebida</h3>
+                  <DishCard name={menu.bebida_nombre} imageUrl={menu.bebida_imagen} />
+                </div>
+              )}
             </div>
           )}
 
@@ -523,53 +529,41 @@ function EmployeeMenu() {
               </div>
               )}
 
-              {/* Postres */}
-              {!loadingOptions && postres.length > 0 && (
+              {/* Postre - planificado por dia */}
+              {menu.postre_nombre && menu.postre_id && (
                 <div className="menu-section">
-                  <h3>Postre</h3>
-                  <div className="dish-selection">
-                    {postres.map((postre) => (
-                      <label key={postre.id} className="dish-option">
+                  <div className="section-header">
+                    <h3>Postre</h3>
+                    <label className="checkbox-label">
                         <input
-                          type="radio"
-                          name="postre"
-                          value={postre.id}
-                          checked={selectedPostre === postre.id}
-                        onChange={() => setSelectedPostre(postre.id)}
-                        disabled={isPastDeadline()}
-                      />
-                        <div className="dish-option-content">
-                          <DishImage imageUrl={postre.imageUrl} name={postre.name} />
-                          <span className="dish-name">{postre.name}</span>
-                        </div>
+                        type="checkbox"
+                        checked={selectedPostre === menu.postre_id}
+                        onChange={(e) => setSelectedPostre(e.target.checked ? menu.postre_id! : null)}
+                          disabled={isPastDeadline()}
+                        />
+                      <span>Quiero postre</span>
                       </label>
-                    ))}
                   </div>
+                  <DishCard name={menu.postre_nombre} imageUrl={menu.postre_imagen} />
                 </div>
               )}
 
-              {/* Bebidas */}
-              {!loadingOptions && bebidas.length > 0 && (
+              {/* Bebida - planificada por dia */}
+              {menu.bebida_nombre && menu.bebida_id && (
                 <div className="menu-section">
-                  <h3>Bebida</h3>
-                  <div className="dish-selection">
-                    {bebidas.map((bebida) => (
-                      <label key={bebida.id} className="dish-option">
+                  <div className="section-header">
+                    <h3>Bebida</h3>
+                    <label className="checkbox-label">
                         <input
-                          type="radio"
-                          name="bebida"
-                          value={bebida.id}
-                          checked={selectedBebida === bebida.id}
-                        onChange={() => setSelectedBebida(bebida.id)}
-                        disabled={isPastDeadline()}
-                      />
-                        <div className="dish-option-content">
-                          <DishImage imageUrl={bebida.imageUrl} name={bebida.name} />
-                          <span className="dish-name">{bebida.name}</span>
-                        </div>
+                        type="checkbox"
+                        checked={selectedBebida === menu.bebida_id}
+                        onChange={(e) => setSelectedBebida(e.target.checked ? menu.bebida_id! : null)}
+                          disabled={isPastDeadline()}
+                        />
+                      <span>Quiero bebida</span>
                       </label>
-                    ))}
                   </div>
+                  <DishCard name={menu.bebida_nombre} imageUrl={menu.bebida_imagen} />
                 </div>
               )}
 
